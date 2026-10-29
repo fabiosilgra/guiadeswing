@@ -1,10 +1,10 @@
 {
   "nome": "Guia de Swing",
   "slogan": "Encontre casas de swing e baladas liberais perto de você",
-  "siteUrl": "https://www.guiadeswing.com.br",
+  "siteUrl": "https://fabiosilgra.github.io/guiadeswing",
   "dominio": "www.guiadeswing.com.br",
-  "usarDominioProprio": true,
-  "basePath": "",
+  "usarDominioProprio": false,
+  "basePath": "/guiadeswing",
   "lancado": false,
   "whatsapp": "5511999999999",
   "email": "contato@guiadeswing.com.br",
