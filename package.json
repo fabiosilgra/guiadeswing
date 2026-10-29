@@ -1,0 +1,10 @@
+{
+  "name": "guia-de-swing",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "preview": "node build.mjs --preview",
+    "test": "node tests/horarios.test.mjs"
+  }
+}

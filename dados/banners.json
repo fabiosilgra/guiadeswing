@@ -1,0 +1,6 @@
+{
+  "_como_usar": "Para ativar um banner, coloque a imagem na pasta assets/banners/ e preencha img (ex.: assets/banners/cliente.jpg), link e alt. Enquanto img estiver vazio, o site mostra 'Anuncie aqui'. Use exatamente o tamanho indicado (em pixels).",
+  "topo":     { "tamanho": "1375 × 280", "img": "", "link": "", "alt": "" },
+  "lateral1": { "tamanho": "420 × 551",  "img": "", "link": "", "alt": "" },
+  "rodape":   { "tamanho": "436 × 326",  "img": "", "link": "", "alt": "" }
+}

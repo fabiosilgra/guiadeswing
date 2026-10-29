@@ -1,0 +1,16 @@
+{
+  "nome": "Guia de Swing",
+  "slogan": "Encontre casas de swing e baladas liberais perto de você",
+  "siteUrl": "https://www.guiadeswing.com.br",
+  "dominio": "www.guiadeswing.com.br",
+  "usarDominioProprio": true,
+  "basePath": "",
+  "lancado": false,
+  "whatsapp": "5511999999999",
+  "email": "contato@guiadeswing.com.br",
+  "instagram": "",
+  "formularioCadastro": "",
+  "fontes": {
+    "planilha": "dados/guia-de-swing.xlsx"
+  }
+}
