@@ -55,7 +55,7 @@ Na primeira visita aparece uma tela pedindo confirmação de maioridade; a respo
 
 Na página de cada estado há um carrossel de **até 10 destaques** (baladas, festas, eventos). Eles ficam na aba **Destaques** da planilha:
 - `titulo` e `legenda`: nome e uma linha de apoio (ex.: "Sexta · 23h · Pinheiros"); `selo`: etiqueta no canto (Festa, Evento, Balada...)
-- `imagem`: arte ou foto horizontal (~800 × 450 px, até 600 KB, sem pessoas), enviada para `assets/destaques/`
+- `imagem`: arte ou foto horizontal (800 × 400 px, até 300 KB, sem pessoas), enviada para `assets/destaques/`
 - `id_local`: se o destaque é de uma casa cadastrada, o clique abre a página dela; senão, use `link`
 - `uf`: o estado onde aparece. Nas páginas de região e de tipo aparecem só os destaques daquela região/tipo.
 

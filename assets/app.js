@@ -228,24 +228,30 @@
     iniciar();
   });
 
-  /* ---------- Carrossel de destaques (até 10) ---------- */
+  /* ---------- Carrossel de destaques (até 10, 3 por vez, em looping) ---------- */
   document.querySelectorAll('.dest-wrap').forEach(function (w) {
     var tr = w.querySelector('.dest-track');
     var prev = w.querySelector('.dest-nav.prev');
     var next = w.querySelector('.dest-nav.next');
-    function atualizar() {
-      var max = tr.scrollWidth - tr.clientWidth;
-      var tem = max > 4;
-      prev.hidden = !tem; next.hidden = !tem;
-      prev.disabled = tr.scrollLeft <= 2;
-      next.disabled = tr.scrollLeft >= max - 2;
+    function passo() {
+      var gap = parseFloat(getComputedStyle(tr).columnGap) || 0;
+      return tr.clientWidth + gap; // avança um "grupo" inteiro (3 destaques no computador)
     }
-    prev.addEventListener('click', function () { tr.scrollBy({ left: -tr.clientWidth * 0.9, behavior: 'smooth' }); });
-    next.addEventListener('click', function () { tr.scrollBy({ left: tr.clientWidth * 0.9, behavior: 'smooth' }); });
-    tr.addEventListener('scroll', atualizar, { passive: true });
+    function atualizar() {
+      var tem = tr.scrollWidth - tr.clientWidth > 4;
+      prev.hidden = !tem; next.hidden = !tem;
+    }
+    function avancar(dir) {
+      var max = tr.scrollWidth - tr.clientWidth;
+      if (dir > 0 && tr.scrollLeft >= max - 4) tr.scrollTo({ left: 0, behavior: 'smooth' });          // fim -> volta ao começo
+      else if (dir < 0 && tr.scrollLeft <= 4) tr.scrollTo({ left: max, behavior: 'smooth' });         // começo -> vai ao fim
+      else tr.scrollBy({ left: dir * passo(), behavior: 'smooth' });
+    }
+    prev.addEventListener('click', function () { avancar(-1); });
+    next.addEventListener('click', function () { avancar(1); });
     tr.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); avancar(-1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); avancar(1); }
     });
     window.addEventListener('resize', atualizar);
     atualizar();
