@@ -8,7 +8,7 @@ Feito a partir do modelo-base do Vou pra Missa.
 
 | Arquivo | Para que serve |
 |---|---|
-| `dados/guia-de-swing.xlsx` | **A planilha.** Abas `Leia-me`, `Locais`, `Horarios` e `Listas` |
+| `dados/guia-de-swing.xlsx` | **A planilha.** Abas `Leia-me`, `Locais`, `Horarios`, `Destaques` e `Listas` |
 | `dados/regioes.json` | Estados, regiões e o menu de regiões |
 | `dados/banners.json` | Anunciantes (imagem + link por posição) |
 | `dados/config.json` | Nome, WhatsApp, e-mail, domínio e a chave **lancado** |
@@ -51,9 +51,25 @@ Só entram nesse cálculo os horários do tipo `funcionamento`. Feriados e datas
 
 Na primeira visita aparece uma tela pedindo confirmação de maioridade; a resposta fica salva só no aparelho. É um aviso, não uma verificação de idade. As páginas também levam a marcação de conteúdo adulto (`rating`/RTA), que ajuda filtros parentais.
 
+## Destaques (carrossel)
+
+Na página de cada estado há um carrossel de **até 10 destaques** (baladas, festas, eventos). Eles ficam na aba **Destaques** da planilha:
+- `titulo` e `legenda`: nome e uma linha de apoio (ex.: "Sexta · 23h · Pinheiros"); `selo`: etiqueta no canto (Festa, Evento, Balada...)
+- `imagem`: arte ou foto horizontal (~800 × 450 px, até 600 KB, sem pessoas), enviada para `assets/destaques/`
+- `id_local`: se o destaque é de uma casa cadastrada, o clique abre a página dela; senão, use `link`
+- `uf`: o estado onde aparece. Nas páginas de região e de tipo aparecem só os destaques daquela região/tipo.
+
+Sem imagem, o site usa a 1ª foto da casa, depois o logo dela, depois as iniciais do nome.
+
+## Logo (foto de perfil) de cada casa
+
+Na coluna `logo` da aba Locais, coloque o caminho da imagem que a casa enviar (quadrada, ~400 × 400 px, até 200 KB), por exemplo `assets/logos/gds-sp-001.png`. Ela aparece no cartão da lista e na página da casa. **Sem logo, o site mostra as iniciais do nome; o logo do Guia de Swing nunca aparece no lugar.**
+
 ## Banners
 
-Tamanhos: **topo 1375 × 280**, **lateral 420 × 551**, **rodapé 436 × 326**. Coloque a imagem em `assets/banners/` e preencha `img`, `link` e `alt` em `dados/banners.json`. Sem imagem, o site mostra "Anuncie aqui". Anúncios vendidos por você, sem AdSense.
+Tamanhos: **topo 1375 × 280**, **laterais (2, um abaixo do outro) 420 × 551**, **rodapé (3, lado a lado) 436 × 326**. Coloque a imagem em `assets/banners/` e preencha `img`, `link` e `alt` em `dados/banners.json`. Sem imagem, o site mostra "Anuncie aqui". Anúncios vendidos por você, sem AdSense.
+
+**Topo fixo ou carrossel:** em `topo`, a lista `itens` aceita quantas imagens você quiser. Com **uma**, o banner é fixo. Com **duas ou mais**, vira carrossel com troca suave (fade); `intervalo` é o tempo em segundos entre as trocas. O carrossel pausa quando o mouse está em cima e não troca sozinho para quem usa "reduzir movimento".
 
 ## Publicar no GitHub (uma vez)
 
@@ -62,13 +78,17 @@ Tamanhos: **topo 1375 × 280**, **lateral 420 × 551**, **rodapé 436 × 326**. 
 2. Em **Settings → Pages**, em *Source*, escolha **GitHub Actions**.
 3. Aba **Actions**: aguarde o fluxo "Publicar site" ficar verde. O endereço aparece em Settings → Pages.
 
-## Domínio www.guiadeswing.com.br
+## Endereço do site
 
-`config.json` já está com `"usarDominioProprio": true`. Depois:
-1. Em Settings → Pages → *Custom domain*, informe `www.guiadeswing.com.br`.
-2. No painel do seu domínio (registro.br ou onde ele estiver), crie um registro **CNAME** de `www` apontando para `SEU-USUARIO.github.io`.
-3. Para `guiadeswing.com.br` (sem www) abrir também, crie quatro registros **A** apontando para `185.199.108.153`, `185.199.109.153`, `185.199.110.153` e `185.199.111.153`.
-4. Marque *Enforce HTTPS* quando o GitHub liberar.
+**Por enquanto** o site fica no endereço grátis do GitHub: `https://fabiosilgra.github.io/guiadeswing/`. Em `dados/config.json` isso está assim:
+`"siteUrl": "https://fabiosilgra.github.io/guiadeswing"`, `"basePath": "/guiadeswing"` e `"usarDominioProprio": false`.
+
+### Quando for ligar o domínio www.guiadeswing.com.br (versão final)
+1. Em `dados/config.json`, troque para: `"siteUrl": "https://www.guiadeswing.com.br"`, `"basePath": ""` e `"usarDominioProprio": true`.
+2. Em Settings → Pages → *Custom domain*, informe `www.guiadeswing.com.br`.
+3. No painel do seu domínio (registro.br ou onde ele estiver), crie um registro **CNAME** de `www` apontando para `fabiosilgra.github.io`.
+4. Para `guiadeswing.com.br` (sem www) abrir também, crie quatro registros **A** apontando para `185.199.108.153`, `185.199.109.153`, `185.199.110.153` e `185.199.111.153`.
+5. Marque *Enforce HTTPS* quando o GitHub liberar.
 
 ## Antes de lançar para o público
 

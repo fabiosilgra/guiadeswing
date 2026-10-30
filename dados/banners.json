@@ -1,6 +1,15 @@
 {
-  "_como_usar": "Para ativar um banner, coloque a imagem na pasta assets/banners/ e preencha img (ex.: assets/banners/cliente.jpg), link e alt. Enquanto img estiver vazio, o site mostra 'Anuncie aqui'. Use exatamente o tamanho indicado (em pixels).",
-  "topo":     { "tamanho": "1375 × 280", "img": "", "link": "", "alt": "" },
-  "lateral1": { "tamanho": "420 × 551",  "img": "", "link": "", "alt": "" },
-  "rodape":   { "tamanho": "436 × 326",  "img": "", "link": "", "alt": "" }
+  "_como_usar": "Coloque as imagens em assets/banners/ e preencha img (ex.: assets/banners/cliente.jpg), link e alt. Enquanto img estiver vazio, o site mostra 'Anuncie aqui'. Use exatamente o tamanho indicado (em pixels). TOPO: para um banner fixo, preencha img/link/alt dentro de 'itens' com uma só imagem; para carrossel com troca suave (fade), coloque 2 ou mais imagens em 'itens' ('intervalo' = segundos entre as trocas).",
+  "topo": {
+    "tamanho": "1375 × 280",
+    "intervalo": 6,
+    "itens": [
+      { "img": "", "link": "", "alt": "" }
+    ]
+  },
+  "lateral1": { "tamanho": "420 × 551", "img": "", "link": "", "alt": "" },
+  "lateral2": { "tamanho": "420 × 551", "img": "", "link": "", "alt": "" },
+  "rodape1":  { "tamanho": "436 × 326", "img": "", "link": "", "alt": "" },
+  "rodape2":  { "tamanho": "436 × 326", "img": "", "link": "", "alt": "" },
+  "rodape3":  { "tamanho": "436 × 326", "img": "", "link": "", "alt": "" }
 }

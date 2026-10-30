@@ -200,6 +200,57 @@
     });
   });
 
+  /* ---------- Banner de topo em carrossel (transição fade) ---------- */
+  var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('.fade-car').forEach(function (box) {
+    var slides = [].slice.call(box.querySelectorAll('.fade-slide'));
+    var dots = [].slice.call(box.querySelectorAll('.fade-dots button'));
+    var seg = (parseFloat(box.getAttribute('data-intervalo')) || 6) * 1000;
+    var n = 0, timer = null;
+    function ir(i) {
+      n = (i + slides.length) % slides.length;
+      slides.forEach(function (s, k) {
+        var on = k === n;
+        s.classList.toggle('on', on);
+        s.setAttribute('aria-hidden', on ? 'false' : 'true');
+        s.tabIndex = on ? 0 : -1;
+      });
+      dots.forEach(function (d, k) { d.setAttribute('aria-current', k === n ? 'true' : 'false'); });
+    }
+    function parar() { if (timer) { clearInterval(timer); timer = null; } }
+    function iniciar() { if (!timer && !reduz) timer = setInterval(function () { ir(n + 1); }, seg); }
+    dots.forEach(function (d, k) { d.addEventListener('click', function () { ir(k); parar(); iniciar(); }); });
+    box.addEventListener('mouseenter', parar);
+    box.addEventListener('mouseleave', iniciar);
+    box.addEventListener('focusin', parar);
+    box.addEventListener('focusout', iniciar);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) parar(); else iniciar(); });
+    iniciar();
+  });
+
+  /* ---------- Carrossel de destaques (até 10) ---------- */
+  document.querySelectorAll('.dest-wrap').forEach(function (w) {
+    var tr = w.querySelector('.dest-track');
+    var prev = w.querySelector('.dest-nav.prev');
+    var next = w.querySelector('.dest-nav.next');
+    function atualizar() {
+      var max = tr.scrollWidth - tr.clientWidth;
+      var tem = max > 4;
+      prev.hidden = !tem; next.hidden = !tem;
+      prev.disabled = tr.scrollLeft <= 2;
+      next.disabled = tr.scrollLeft >= max - 2;
+    }
+    prev.addEventListener('click', function () { tr.scrollBy({ left: -tr.clientWidth * 0.9, behavior: 'smooth' }); });
+    next.addEventListener('click', function () { tr.scrollBy({ left: tr.clientWidth * 0.9, behavior: 'smooth' }); });
+    tr.addEventListener('scroll', atualizar, { passive: true });
+    tr.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
+    });
+    window.addEventListener('resize', atualizar);
+    atualizar();
+  });
+
   /* ---------- Dados para busca e "Minha lista" ---------- */
   var dados = null;
   var filaDados = [];

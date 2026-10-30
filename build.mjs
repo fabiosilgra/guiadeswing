@@ -106,7 +106,6 @@ for (const r of rowsL) {
     ...r, uf, slug, tipoSlug, tipoNome: TIPOS[tipoSlug].um,
     regiaoSlug: reg ? reg.slug : slugify(r.regiao),
     regiaoNome: reg ? reg.nome : r.regiao,
-    destaque: sim(r.destaque),
     exemplo: sim(r.exemplo),
     fotos: parseLista(r.fotos),
     valores: parsePares(r.valores),
@@ -116,6 +115,32 @@ for (const r of rowsL) {
   });
 }
 const porId = Object.fromEntries(locais.map((c) => [c.id, c]));
+
+/* Destaques do carrossel: aba "Destaques" (baladas, festas, eventos) */
+const MAX_DEST = 10;
+const destaquesTodos = [];
+for (const r0 of (achar('destaques') || [])) {
+  const r = txt(r0);
+  if (!sim(r.publicar)) continue;
+  const uf = (r.uf || '').toUpperCase();
+  if (!r.titulo) { warn('Destaques: linha sem "titulo" ignorada.'); continue; }
+  if (!estados[uf]) { warn(`Destaques: "${r.titulo}" tem UF "${r.uf}" desconhecida — ignorado.`); continue; }
+  let local = null;
+  if (r.id_local) {
+    local = porId[r.id_local] || null;
+    if (!local) warn(`Destaques: "${r.titulo}" aponta para id_local "${r.id_local}", que não existe ou não está com publicar = SIM.`);
+  }
+  if (r.imagem && !ehUrl(r.imagem)) {
+    const arq = path.join(ROOT, r.imagem);
+    if (!fs.existsSync(arq)) warn(`Destaques: a imagem "${r.imagem}" de "${r.titulo}" não foi encontrada.`);
+    else if (fs.statSync(arq).size > 600 * 1024) warn(`Destaques: a imagem "${r.imagem}" passa de 600 KB. Reduza para abrir rápido no celular.`);
+  }
+  destaquesTodos.push({ uf, selo: r.selo || 'Destaque', titulo: r.titulo, legenda: r.legenda, imagem: r.imagem, link: r.link, local });
+}
+for (const uf of new Set(destaquesTodos.map((d) => d.uf))) {
+  const n = destaquesTodos.filter((d) => d.uf === uf).length;
+  if (n > MAX_DEST) warn(`Destaques: ${uf} tem ${n} destaques; só os ${MAX_DEST} primeiros aparecem no carrossel.`);
+}
 
 const TIPOS_HOR = { funcionamento: 'Funcionamento', festa: 'Festas e noites temáticas', atendimento: 'Atendimento e reservas' };
 const ALIAS_HOR = { festas: 'festa', evento: 'festa', eventos: 'festa', reserva: 'atendimento', reservas: 'atendimento', abre: 'funcionamento', aberto: 'funcionamento' };
@@ -134,12 +159,12 @@ for (const h of rowsH) {
 }
 for (const c of locais) {
   c.capa = c.fotos[0] || '';
-  for (const f of c.fotos) {
+  for (const f of [...c.fotos, ...(c.logo ? [c.logo] : [])]) {
     if (ehUrl(f)) continue;
     const arq = path.join(ROOT, f);
     if (!fs.existsSync(arq)) { warn(`"${c.nome}" (${c.id}): a foto "${f}" não foi encontrada. Confira o nome e se o arquivo foi enviado.`); continue; }
     const kb = Math.round(fs.statSync(arq).size / 1024);
-    if (kb > 600) warn(`"${c.nome}" (${c.id}): a foto "${f}" tem ${kb} KB. Reduza para até ~300 KB para o site abrir rápido no celular.`);
+    if (kb > 600) warn(`"${c.nome}" (${c.id}): o arquivo "${f}" tem ${kb} KB. Reduza para até ~300 KB para o site abrir rápido no celular.`);
   }
   if (!c.exemplo) {
     const dias = idadeDias(c.confirmado_em);
@@ -163,7 +188,6 @@ for (const c of locais) {
 }
 const ordenar = (lista) =>
   [...lista].sort((a, b) =>
-    (b.destaque ? 1 : 0) - (a.destaque ? 1 : 0) ||
     a.cidade.localeCompare(b.cidade, 'pt-BR') ||
     a.bairro.localeCompare(b.bairro, 'pt-BR') ||
     a.nome.localeCompare(b.nome, 'pt-BR'));
@@ -198,6 +222,18 @@ const ICON = {
   heartSm: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#F0030C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
 };
 
+const PALAVRAS_TIPO = /^(casa|balada|clube|sauna|priv[eê]|motel|de|da|do|das|dos|e|the)$/i;
+const iniciais = (nome) => {
+  const pal = nome.split(/\s+/).filter(Boolean);
+  const uteis = pal.filter((w) => !PALAVRAS_TIPO.test(w));
+  const base = (uteis.length ? uteis : pal).slice(0, 2);
+  return base.map((w) => w[0]).join('').toUpperCase();
+};
+// Logo da própria casa (coluna "logo"); sem logo, mostra as iniciais do nome.
+const avatarHtml = (c) => (c.logo
+  ? `<img src="${esc(fotoSrc(c.logo))}" alt="" loading="lazy">`
+  : `<span class="mono" aria-hidden="true">${esc(iniciais(c.nome))}</span>`);
+
 const fotoSrc = (p) => (ehUrl(p) ? p : CTX.a(String(p).replace(/^\/+/, '')));
 
 /* Selo de confirmação das informações. curto=true nos cartões, completo na página do lugar. */
@@ -216,15 +252,31 @@ function seloConfirmacao(c, curto = false) {
 const wa = (msg) => `https://wa.me/${cfg.whatsapp}?text=${encodeURIComponent(msg)}`;
 const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
 
-function banner(pos) {
-  const b = banners[pos];
-  if (!b) return '';
-  const [w, h] = (b.tamanho.match(/\d+/g) || []).map(Number);
+const dimBanner = (b) => (b.tamanho.match(/\d+/g) || []).map(Number);
+function bannerItem(pos, b) {
+  const [w, h] = dimBanner(b);
   if (b.img) {
     return `<a class="ad ad-${pos}" href="${esc(b.link || '#')}" target="_blank" rel="sponsored noopener"><span class="ad-tag">publicidade</span><img src="${esc(CTX.a(b.img))}" alt="${esc(b.alt || 'Publicidade')}" width="${w}" height="${h}" loading="lazy"></a>`;
   }
   return `<a class="ad vazio ad-${pos}" style="aspect-ratio:${w}/${h}" href="${esc(CTX.u('anuncie/'))}"><span class="ad-tag">publicidade</span><b>Anuncie aqui</b><small>${esc(b.tamanho)} px</small></a>`;
 }
+function banner(pos) {
+  const b = banners[pos];
+  return b ? bannerItem(pos, b) : '';
+}
+/* Topo: fixo (1 imagem) ou carrossel com transição fade (2 ou mais imagens em "itens") */
+function bannerTopo() {
+  const b = banners.topo;
+  if (!b) return '';
+  const itens = (b.itens && b.itens.length ? b.itens : [b]).filter((i) => i && i.img);
+  if (itens.length < 2) return bannerItem('topo', itens.length ? { ...b, ...itens[0] } : b);
+  const [w, h] = dimBanner(b);
+  const slides = itens.map((i, n) =>
+    `<a class="fade-slide${n === 0 ? ' on' : ''}" href="${esc(i.link || '#')}" target="_blank" rel="sponsored noopener"${n === 0 ? '' : ' aria-hidden="true" tabindex="-1"'}><img src="${esc(CTX.a(i.img))}" alt="${esc(i.alt || 'Publicidade')}" width="${w}" height="${h}"${n === 0 ? '' : ' loading="lazy"'}></a>`).join('');
+  const dots = itens.map((_, n) => `<button type="button" aria-label="Banner ${n + 1} de ${itens.length}" aria-current="${n === 0}"></button>`).join('');
+  return `<div class="ad ad-topo fade-car" style="aspect-ratio:${w}/${h}" data-intervalo="${esc(b.intervalo || 6)}" role="group" aria-roledescription="carrossel" aria-label="Publicidade"><span class="ad-tag">publicidade</span>${slides}<div class="fade-dots">${dots}</div></div>`;
+}
+const bannersRodape = () => `<div class="ads-rodape">${['rodape1', 'rodape2', 'rodape3'].map(banner).join('')}</div>`;
 
 function menuHtml(ufAtual) {
   const macroAtual = ufAtual && estados[ufAtual] ? estados[ufAtual].macro : geo.macro[0].nome;
@@ -333,7 +385,7 @@ ${gateHtml()}
 function cardHtml(c) {
   const selo = seloConfirmacao(c, true) + (c.exemplo ? '<span class="badge-ex">exemplo</span>' : '');
   return `<div class="card-wrap"><a class="card" href="${CTX.u(`local/${c.slug}/`)}">
-<span class="card-top"><span class="avatar">${c.capa ? `<img src="${esc(fotoSrc(c.capa))}" alt="" loading="lazy">` : svgPin(30, '#F0030C', '#fff')}</span>
+<span class="card-top"><span class="avatar">${avatarHtml(c)}</span>
 <span class="card-title"><span class="nome">${esc(c.nome)}</span><span class="sub">${esc(c.tipoNome)}</span></span></span>
 <span class="card-loc">${ICON.pin}${esc(c.bairro)} · ${esc(c.cidade)}</span>
 <span class="card-badges"><span class="badge badge-prox js-proxima" data-horarios="${esc(c.tokens)}">${ICON.clockSm}<span>Ver horários</span></span>${selo}</span>
@@ -341,8 +393,20 @@ function cardHtml(c) {
 </a><button type="button" class="save" data-id="${esc(c.id)}" data-nome="${esc(c.nome)}" aria-pressed="false" aria-label="Salvar na minha lista: ${esc(c.nome)}">${ICON.heart}</button></div>`;
 }
 
-function destaqueHtml(c) {
-  return `<a class="destaque" href="${CTX.u(`local/${c.slug}/`)}">${c.capa ? `<img src="${esc(fotoSrc(c.capa))}" alt="" loading="lazy">` : `<span class="destaque-pin" aria-hidden="true">${svgPin(150, '#F0030C', '#1B1B1F')}</span>`}<span class="selo">Destaque</span><span class="leg"><b>${esc(c.nome)}</b><span>${esc(c.tipoNome)} · ${esc(c.bairro)}</span></span></a>`;
+function destaqueHtml(d) {
+  const img = d.imagem || (d.local && d.local.fotos[0]) || '';
+  const href = d.local ? CTX.u(`local/${d.local.slug}/`) : (d.link || '');
+  const externo = !d.local && d.link;
+  const dentro = `${img ? `<img src="${esc(fotoSrc(img))}" alt="" loading="lazy">` : `<span class="destaque-marca" aria-hidden="true">${d.local && d.local.logo ? `<img src="${esc(fotoSrc(d.local.logo))}" alt="">` : `<span class="mono">${esc(iniciais(d.local ? d.local.nome : d.titulo))}</span>`}</span>`}<span class="selo">${esc(d.selo)}</span><span class="leg"><b>${esc(d.titulo)}</b>${d.legenda ? `<span>${esc(d.legenda)}</span>` : ''}</span>`;
+  return href
+    ? `<a class="destaque" href="${esc(href)}"${externo ? ' target="_blank" rel="noopener"' : ''}>${dentro}</a>`
+    : `<div class="destaque">${dentro}</div>`;
+}
+const SETA = (d) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+function carrosselDestaques(lista) {
+  if (!lista.length) return '';
+  return `<section class="dest-car" role="group" aria-roledescription="carrossel" aria-label="Destaques"><div class="sec-tit"><h2 class="sec">Destaques</h2><span>${plural(lista.length, 'destaque', 'destaques')}</span></div>
+<div class="dest-wrap"><button type="button" class="dest-nav prev" aria-label="Destaques anteriores" hidden>${SETA('M15 5l-7 7 7 7')}</button><div class="dest-track" tabindex="0">${lista.map(destaqueHtml).join('')}</div><button type="button" class="dest-nav next" aria-label="Próximos destaques" hidden>${SETA('M9 5l7 7-7 7')}</button></div></section>`;
 }
 
 /* =====================================================================
@@ -384,7 +448,7 @@ ${buscaHtml('q-hero', 'Digite o nome da casa, bairro ou cidade')}
 <section class="card-regiao"><h2>Escolha uma região</h2><div class="estados">${estadosHtml}</div></section>
 <section class="bloco"><h2>Ou escolha pelo tipo de lugar</h2><p>Casas de swing, baladas liberais, clubes e outros ambientes para adultos.</p>${tiposHtml || '<span class="chip soon">Em breve</span>'}</section>
 <section class="bloco"><h2>A sua casa ainda não está aqui?</h2><p>O cadastro é gratuito. Envie horários, valores e regras de entrada e a sua casa passa a aparecer para quem procura na região.</p><a class="btn-cta" style="display:inline-block" href="${CTX.u('cadastre-sua-casa/')}">Cadastre sua casa</a></section>
-<div style="margin-top:22px">${banner('rodape')}</div>
+<div style="margin-top:22px">${bannersRodape()}</div>
 </div>`;
   emitir('index.html', layout({
     title: '', desc: `${cfg.slogan}. Casas de swing, baladas liberais e clubes por estado e região, com horários, valores e regras de entrada.`,
@@ -409,7 +473,9 @@ function listagem({ depth, rel, uf, kicker, h1, crumbs, lista, regSel, tipoSel, 
     : '';
 
   const ordenada = ordenar(lista);
-  const dest = ordenada.filter((c) => c.destaque).slice(0, 3);
+  const dest = destaquesTodos
+    .filter((d) => d.uf === uf && (!d.local || ((!regSel || d.local.regiaoSlug === regSel) && (!tipoSel || d.local.tipoSlug === tipoSel))))
+    .slice(0, MAX_DEST);
 
   const body = `
 <div class="faixa"><div class="faixa-in">
@@ -419,14 +485,14 @@ ${chipsTipo ? `<div class="linha-chips"><span class="rot">Tipos</span>${chipsTip
 <div class="conteudo">
 <nav class="migalha" aria-label="Você está em">${crumbs}</nav>
 <div><p class="kicker">${esc(kicker)}</p><h1 class="titulo">${esc(h1)}</h1></div>
-${banner('topo')}
-${dest.length ? `<section style="display:flex;flex-direction:column;gap:14px"><div class="sec-tit"><h2 class="sec">Destaques</h2></div><div class="destaques">${dest.map(destaqueHtml).join('')}</div></section>` : ''}
+${bannerTopo()}
+${carrosselDestaques(dest)}
 <div class="duas-col">
 <section class="col-main"><div class="sec-tit"><h2 class="sec">Casas e horários</h2><span>${plural(ordenada.length, 'lugar', 'lugares')}</span></div>
 <div class="grid-cards">${ordenada.map(cardHtml).join('')}</div></section>
-<aside class="col-side" aria-label="Publicidade">${banner('lateral1')}</aside>
+<aside class="col-side" aria-label="Publicidade">${banner('lateral1')}${banner('lateral2')}</aside>
 </div>
-${banner('rodape')}
+${bannersRodape()}
 </div>`;
   const exemplo = lista.every((c) => c.exemplo);
   emitir(rel, layout({ title, desc, canonical: canonicalPath, body, uf, noindex: exemplo }), canonicalPath, !exemplo);
@@ -516,7 +582,7 @@ function paginaLocal(c) {
 ${fotos.length > 1 ? `<button type="button" class="gal-nav prev" aria-label="Foto anterior"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="gal-nav next" aria-label="Próxima foto"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><span class="gal-count" aria-live="polite">1 / ${fotos.length}</span>` : ''}</div>
 ${fotos.length > 1 ? `<div class="gal-thumbs">${fotos.map((f, i) => `<a class="gal-thumb" href="${esc(fotoSrc(f))}" data-src="${esc(fotoSrc(f))}" data-alt="${esc(`Foto ${i + 1} de ${fotos.length} — ${c.nome}`)}" aria-label="Ver foto ${i + 1}" aria-current="${i === 0}"><img src="${esc(fotoSrc(f))}" alt="" loading="lazy" width="96" height="64"></a>`).join('')}</div>` : ''}
 </section>`
-    : `<section class="secao galeria vazia" aria-label="Fotos"><div class="gal-stage gal-vazia"><span class="gal-vazia-pin" aria-hidden="true">${svgPin(190, '#F0030C', '#1B1B1F')}</span><div class="gal-vazia-txt"><b>Esta casa ainda não enviou fotos.</b><span>Se você é responsável por ela, envie fotos da fachada e do ambiente (sem pessoas) para aparecerem aqui.</span><a class="btn-cta" href="${CTX.u('cadastre-sua-casa/')}">Enviar fotos</a></div></div></section>`;
+    : `<section class="secao galeria vazia" aria-label="Fotos"><div class="gal-stage gal-vazia"><div class="gal-vazia-txt"><b>Esta casa ainda não enviou fotos.</b><span>Se você é responsável por ela, envie fotos da fachada e do ambiente (sem pessoas) para aparecerem aqui.</span><a class="btn-cta" href="${CTX.u('cadastre-sua-casa/')}">Enviar fotos</a></div></div></section>`;
 
   const func = agrupar(c.horarios.funcionamento);
   const atend = agrupar(c.horarios.atendimento).map((l) => linhaHtml(l, TIPOS_HOR.atendimento));
@@ -547,7 +613,7 @@ ${fotos.length > 1 ? `<div class="gal-thumbs">${fotos.map((f, i) => `<a class="g
 <nav class="migalha" aria-label="Você está em">${migalhaBase()}<a href="${CTX.u(base + '/')}">${esc(e.nome)}</a><span aria-hidden="true">›</span><a href="${CTX.u(`${base}/${c.regiaoSlug}/`)}">${esc(c.regiaoNome)}</a><span aria-hidden="true">›</span><span>${esc(c.nome)}</span></nav>
 ${c.exemplo ? '<div class="aviso-ex"><strong>Dados de exemplo.</strong> Esta página é fictícia e serve apenas para testar o site: nome, endereço, horários e valores não correspondem a nenhum lugar real.</div>' : ''}
 <section class="ficha">
-<div class="ficha-info"><span class="avatar">${c.capa ? `<img src="${esc(fotoSrc(c.capa))}" alt="">` : svgPin(46, '#F0030C', '#fff')}</span>
+<div class="ficha-info"><span class="avatar">${avatarHtml(c)}</span>
 <div style="min-width:0;display:flex;flex-direction:column"><h1>${esc(c.nome)}</h1>
 <div class="tipo">${esc(c.tipoNome)} · ${esc(c.bairro)}, ${esc(c.cidade)}/${esc(c.uf)}</div>
 ${c.ambiente.length ? `<div class="chips-simples" style="margin-top:10px">${c.ambiente.map((a) => `<span class="chip">${esc(a)}</span>`).join('')}</div>` : ''}
@@ -571,8 +637,9 @@ ${atend.length ? `<section class="secao"><h2>Atendimento e reservas</h2><table c
 </div>
 <aside class="col-side" aria-label="Publicidade e outros lugares">${banner('lateral1')}
 ${maisPerto.length ? `<div class="perto"><h2>Outros lugares${perto.length ? ' perto' : ''}</h2>${maisPerto.map((p) => `<a href="${CTX.u(`local/${p.slug}/`)}"><b>${esc(p.nome)}</b><span>${esc(p.tipoNome)} · ${esc(p.bairro)}</span></a>`).join('')}</div>` : ''}
+${banner('lateral2')}
 </aside></div>
-${banner('rodape')}
+${bannersRodape()}
 </div>`;
 
   const descPadrao = `${c.tipoNome} em ${c.bairro}, ${c.cidade}/${c.uf}: horários de funcionamento, valores, regras de entrada, endereço e como chegar à ${c.nome}.`;
@@ -592,7 +659,7 @@ ${banner('rodape')}
 /* ---------- Páginas de texto ---------- */
 function paginaTexto(rel, titulo, desc, conteudo, canonical) {
   CTX = mkctx(1);
-  const body = `<div class="conteudo"><nav class="migalha" aria-label="Você está em">${migalhaBase()}<span>${esc(titulo)}</span></nav><article class="texto"><h1 class="titulo">${esc(titulo)}</h1>${conteudo()}</article>${banner('rodape')}</div>`;
+  const body = `<div class="conteudo"><nav class="migalha" aria-label="Você está em">${migalhaBase()}<span>${esc(titulo)}</span></nav><article class="texto"><h1 class="titulo">${esc(titulo)}</h1>${conteudo()}</article>${bannersRodape()}</div>`;
   emitir(rel, layout({ title: titulo, desc, canonical, body }), canonical, true);
 }
 
@@ -601,10 +668,10 @@ function paginasTexto() {
 <p>O ${esc(cfg.nome)} reúne pessoas que procuram casas de swing, baladas liberais e clubes na sua região. Anunciar aqui é falar com um público adulto, local e com intenção de sair.</p>
 <h2>Espaços disponíveis</h2>
 <table><thead><tr><th>Espaço</th><th>Onde aparece</th><th>Tamanho</th></tr></thead><tbody>
-<tr><td>Topo</td><td>Faixa larga no alto das páginas de região e de tipo</td><td>${esc(banners.topo.tamanho)} px</td></tr>
-<tr><td>Lateral</td><td>Ao lado da lista e da página de cada lugar</td><td>${esc(banners.lateral1.tamanho)} px</td></tr>
-<tr><td>Rodapé</td><td>Antes do rodapé, em todas as páginas</td><td>${esc(banners.rodape.tamanho)} px</td></tr>
-<tr><td>Casa em destaque</td><td>Destaques no topo da lista da região</td><td>Para casas, baladas e clubes</td></tr>
+<tr><td>Topo</td><td>Faixa larga no alto das páginas de região e de tipo. Fixo ou em carrossel com troca suave (fade)</td><td>${esc(banners.topo.tamanho)} px</td></tr>
+<tr><td>Lateral (2 espaços)</td><td>Um abaixo do outro, ao lado da lista e da página de cada lugar</td><td>${esc(banners.lateral1.tamanho)} px</td></tr>
+<tr><td>Rodapé (3 espaços)</td><td>Lado a lado, antes do rodapé, em todas as páginas</td><td>${esc(banners.rodape1.tamanho)} px</td></tr>
+<tr><td>Destaque</td><td>Carrossel de até 10 baladas, festas e eventos no topo da lista do estado</td><td>Imagem a combinar</td></tr>
 </tbody></table>
 <h2>Como funciona</h2>
 <ol><li>Você escolhe o espaço e a região (estado ou zona).</li><li>Envia a imagem no tamanho indicado e o link de destino.</li><li>Publicamos e você acompanha o período combinado.</li></ol>
