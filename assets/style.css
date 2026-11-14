@@ -347,3 +347,33 @@ h1.titulo { margin: 0; font-family: var(--heading); font-weight: 700; font-size:
 .destaque-marca { position: absolute; inset: 0 0 48px; display: flex; align-items: center; justify-content: center; }
 .destaque-marca .mono { width: 92px; height: 92px; border-radius: 50%; background: var(--rosa); color: var(--vermelho-esc); font-family: var(--heading); font-weight: 700; font-size: 34px; display: flex; align-items: center; justify-content: center; }
 .destaque-marca img { width: 104px; height: 104px; object-fit: contain; background: #fff; border-radius: 18px; padding: 8px; }
+
+/* ---------- Tabela de valores por dia ---------- */
+.tab-rolavel { overflow-x: auto; }
+.tab-valores { width: 100%; border-collapse: collapse; font-size: 15px; }
+.tab-valores thead th { text-align: left; background: var(--fundo2); color: var(--suave); font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 10px 12px; }
+.tab-valores tr.grupo th { text-align: left; background: var(--preto); color: #fff; font-family: var(--heading); font-size: 16px; font-weight: 600; padding: 9px 12px; }
+.tab-valores tr.grupo.is-hoje th { background: var(--vermelho); }
+.tab-valores tr.grupo .tag-hoje { background: #fff; color: var(--vermelho-esc); }
+.tab-valores tbody tr:not(.grupo) th { text-align: left; font-weight: 600; padding: 11px 12px; vertical-align: top; width: 26%; }
+.tab-valores tbody tr:not(.grupo) th small { display: block; font-weight: 500; color: var(--suave); font-size: 12.5px; }
+.tab-valores td { padding: 11px 12px; vertical-align: top; border-bottom: 1px solid var(--borda2); }
+.tab-valores tbody tr:not(.grupo) th { border-bottom: 1px solid var(--borda2); }
+.sem-valor { color: #9A9495; }
+@media (max-width: 760px) {
+  .tab-valores thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .tab-valores, .tab-valores tbody, .tab-valores tr, .tab-valores th, .tab-valores td { display: block; width: 100%; }
+  .tab-valores tbody tr:not(.grupo) { border-bottom: 1px solid var(--borda); padding: 8px 0; }
+  .tab-valores tbody tr:not(.grupo) th { width: 100%; border: 0; padding: 6px 12px 2px; }
+  .tab-valores td { display: flex; justify-content: space-between; gap: 14px; border: 0; padding: 4px 12px; }
+  .tab-valores td::before { content: attr(data-label); color: var(--suave); font-weight: 600; flex: none; }
+}
+
+/* ---------- Texto da casa em HTML (h2/h3/listas) ---------- */
+.sobre-html h2:not(:first-child) { margin-top: 26px; }
+.sobre-html h3 { margin: 20px 0 8px; font-family: var(--heading); font-size: 20px; font-weight: 700; color: var(--preto); }
+.sobre-html h4 { margin: 16px 0 6px; font-size: 16px; font-weight: 700; }
+.sobre-html ul, .sobre-html ol { margin: 0 0 14px; padding-left: 22px; line-height: 1.65; }
+.sobre-html li { margin-bottom: 4px; }
+.sobre-html blockquote { margin: 0 0 14px; padding: 4px 16px; border-left: 4px solid var(--vermelho); color: var(--suave); }
+.sobre-html a { color: var(--vermelho-esc); font-weight: 600; }
