@@ -63,7 +63,7 @@ small.c{color:var(--s)}
  <h2>1. Dados da casa</h2>
  <p class="dica">Campos com <span style="color:var(--v)">*</span> são obrigatórios.</p>
  <div class="grid">
-  <div><label>Código (id) <span class="ob">*</span></label><div style="display:flex;gap:6px"><input id="id" placeholder="gds-sp-009"><button type="button" id="gerarid" title="Sugerir um código">Sugerir</button></div><small class="c">Único para cada casa. Não repita.</small></div>
+  <div><label>Código (id) <span class="ob">*</span></label><div style="display:flex;gap:6px"><input id="id" placeholder="casa-veludo-moema"><button type="button" id="gerarid" title="Sugerir um código">Sugerir</button></div><small class="c">Preenchido sozinho com nome + bairro. Único para cada casa; só letras, números e hífen.</small></div>
   <div><label>Nome <span class="ob">*</span></label><input id="nome"></div>
   <div><label>Tipo <span class="ob">*</span></label><select id="tipo"></select></div>
   <div><label>Estado <span class="ob">*</span></label><select id="uf"></select></div>
@@ -153,7 +153,12 @@ $('tipo').innerHTML = TIPOS.map(t=>`<option>${t}</option>`).join('');
 $('uf').innerHTML = Object.keys(GEO.estados).map(u=>`<option value="${u}">${u} — ${GEO.estados[u].nome}</option>`).join('');
 function regioes(sel){ const r = (GEO.estados[$('uf').value].regioes||[]).map(x=>x.nome||x); $('regiao').innerHTML = r.map(x=>`<option>${x}</option>`).join(''); if(sel) $('regiao').value = sel; }
 $('uf').onchange = ()=>regioes(); $('uf').value='SP'; regioes();
-$('gerarid').onclick = ()=>{ $('id').value = `gds-${$('uf').value.toLowerCase()}-${Date.now().toString(36).slice(-4)}`; };
+const slug = (t)=>t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+const idAuto = ()=>slug($('nome').value+' '+$('bairro').value);
+let idManual = false;
+$('id').addEventListener('input',()=>{ idManual = $('id').value.trim()!=='' && $('id').value!==idAuto(); });
+['nome','bairro'].forEach(i=>$(i).addEventListener('input',()=>{ if(!idManual) $('id').value = idAuto(); }));
+$('gerarid').onclick = ()=>{ idManual=false; $('id').value = idAuto(); };
 
 /* horários */
 function addH(h={}){
