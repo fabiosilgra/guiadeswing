@@ -13,6 +13,7 @@ import {
   parseFaixa, fmtFaixa, hhmm, fmtData, parseLista, parsePares, ehUrl, fmtDataCurta, idadeDias
 } from './build/lib.mjs';
 import { lerXlsx, horaExcel, dataExcel } from './build/xlsx.mjs';
+import { lerCasas, sanitizarHtml, ehHtml, textoPuro } from './build/casas.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -62,23 +63,30 @@ const TIPOS = {
 };
 
 const arqPlanilha = cfg.fontes.planilha || 'dados/guia-de-swing.xlsx';
-if (!fs.existsSync(path.join(ROOT, arqPlanilha))) {
-  throw new Error(`Não encontrei a planilha "${arqPlanilha}". Ela precisa estar na pasta dados/ com as abas "Locais" e "Horarios".`);
+const casasJson = lerCasas(path.join(ROOT, 'dados/casas'), warn);
+const temPlanilha = fs.existsSync(path.join(ROOT, arqPlanilha));
+if (!temPlanilha && !casasJson.arquivos) {
+  throw new Error(`Não encontrei a planilha "${arqPlanilha}" nem casas em dados/casas/. Gere uma casa pelo formulário (cadastro.html) ou use a planilha.`);
 }
-const abas = lerXlsx(fs.readFileSync(path.join(ROOT, arqPlanilha)));
+const abas = temPlanilha ? lerXlsx(fs.readFileSync(path.join(ROOT, arqPlanilha))) : {};
 const achar = (n) => abas[Object.keys(abas).find((k) => slugify(k) === n)];
-const aL = achar('locais'), aH = achar('horarios');
-if (!aL || !aH) throw new Error('A planilha precisa ter as abas "Locais" e "Horarios".');
+const aL = achar('locais') || [], aH = achar('horarios') || [];
+if (temPlanilha && (!aL.length && !aH.length && !achar('locais'))) throw new Error('A planilha precisa ter as abas "Locais" e "Horarios".');
 const txt = (o, dataCols = [], horaCols = []) => Object.fromEntries(Object.entries(o).map(([k, v]) =>
   [k, dataCols.includes(k) ? dataExcel(v) : horaCols.includes(k) ? horaExcel(v) : String(v ?? '').trim()]));
-let rowsL = aL.map((o) => txt(o, ['confirmado_em']));
-let rowsH = aH.map((o) => txt(o, [], ['hora']));
+// casas em dados/casas/*.json têm prioridade sobre a planilha com o mesmo id
+const idsJson = new Set(casasJson.L.map((r) => r.id));
+let rowsL = [...aL.map((o) => txt(o, ['confirmado_em'])).filter((r) => !idsJson.has(r.id)), ...casasJson.L];
+let rowsH = [...aH.map((o) => txt(o, [], ['hora'])).filter((r) => !idsJson.has(r.id_local)), ...casasJson.H];
 // só entra no site quem tem "publicar" = sim
 const totalLinhas = rowsL.length;
 rowsL = rowsL.filter((r) => sim(r.publicar));
 const despublicados = totalLinhas - rowsL.length;
 const pub = new Set(rowsL.map((r) => r.id));
 rowsH = rowsH.filter((r) => pub.has(r.id_local));
+// aba opcional "Valores": tabela de preços por dia e condição
+const todosIds = new Set([...aL.map((o) => String(o.id ?? '').trim()), ...idsJson]);
+let rowsV = [...(achar('valores') || []).map((o) => txt(o)).filter((r) => !idsJson.has(r.id_local)), ...casasJson.V].filter((r) => pub.has(r.id_local) || !todosIds.has(r.id_local));
 if (!rowsL.length) warn('A planilha ainda não tem nenhum lugar com "publicar = SIM"; o site foi gerado vazio.');
 
 const ids = new Set();
@@ -111,7 +119,8 @@ for (const r of rowsL) {
     valores: parsePares(r.valores),
     regras: parseLista(r.regras),
     ambiente: parseLista(r.ambiente),
-    horarios: { funcionamento: [], festa: [], atendimento: [] }
+    horarios: { funcionamento: [], festa: [], atendimento: [] },
+    tabelaValores: []
   });
 }
 const porId = Object.fromEntries(locais.map((c) => [c.id, c]));
@@ -156,6 +165,21 @@ for (const h of rowsH) {
   const faixa = parseFaixa(h.hora);
   if (!faixa) { warn(`${ref}: não entendi a hora "${h.hora}" (exemplos: 22:00 ou 22:00-05:00).`); continue; }
   c.horarios[tipo].push({ dias, faixa, obs: h.obs || '' });
+}
+/* Aba Valores: "dia" aceita terça-feira, sex-sab, todos ou um texto livre (ex.: Véspera de feriado) */
+function diaValores(texto) {
+  const limpo = String(texto).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\s-]*feira/g, '').trim();
+  const dias = limpo ? parseDias(limpo) : [];
+  return { dias, rotulo: dias.length ? labelDias(dias) : String(texto).trim() };
+}
+for (const v of rowsV) {
+  const c = porId[v.id_local];
+  const ref = `Valores (${v.id_local} · ${v.dia} · ${v.condicao})`;
+  if (!c) { if (!todosIds.has(v.id_local)) warn(`${ref}: não existe lugar com esse id na aba Locais.`); continue; }
+  if (!v.dia) { warn(`${ref}: linha sem "dia" ignorada.`); continue; }
+  const outros = parsePares(v.outros);
+  if (!v.casal && !v.mulher_solteira && !v.homem_solteiro && !outros.length) { warn(`${ref}: linha sem nenhum valor preenchido ignorada.`); continue; }
+  c.tabelaValores.push({ ...diaValores(v.dia), condicao: v.condicao || '', obs: v.obs || '', casal: v.casal || '', mulher: v.mulher_solteira || '', homem: v.homem_solteiro || '', outros });
 }
 for (const c of locais) {
   c.capa = c.fotos[0] || '';
@@ -593,15 +617,44 @@ ${fotos.length > 1 ? `<div class="gal-thumbs">${fotos.map((f, i) => `<a class="g
       `<tr data-dias="${g.dias.map(jsDia).join(',')}"><th scope="row">${esc(g.obs || 'Festa')}<small>${esc(labelDias(g.dias))}</small></th><td><span class="hora">${fmtFaixa(g.faixa)}</span></td></tr>`).join('')}</tbody></table></section>`
     : '';
 
-  const valoresHtml = c.valores.length
+  const tabelaValores = (() => {
+    const rows = c.tabelaValores;
+    if (!rows.length) return '';
+    const cols = [['casal', 'Casal'], ['mulher', 'Mulher solteira'], ['homem', 'Homem solteiro']].filter(([k]) => rows.some((r) => r[k]));
+    const temOutros = rows.some((r) => r.outros.length);
+    const n = 1 + cols.length + (temOutros ? 1 : 0);
+    const vazio = '<span class="sem-valor">—</span>';
+    let corpo = '';
+    let atual = null;
+    for (const r of rows) {
+      if (r.rotulo !== atual) {
+        atual = r.rotulo;
+        corpo += `<tr class="grupo"${r.dias.length ? ` data-dias="${r.dias.map(jsDia).join(',')}"` : ''}><th scope="colgroup" colspan="${n}">${esc(r.rotulo)}</th></tr>`;
+      }
+      corpo += `<tr><th scope="row">${esc(r.condicao || 'Qualquer horário')}${r.obs ? `<small>${esc(r.obs)}</small>` : ''}</th>`
+        + cols.map(([k, rot]) => `<td data-label="${rot}">${r[k] ? esc(r[k]) : vazio}</td>`).join('')
+        + (temOutros ? `<td data-label="Outros">${r.outros.length ? r.outros.map((o) => `${o.rotulo ? esc(o.rotulo) + ': ' : ''}${esc(o.valor)}`).join('<br>') : vazio}</td>` : '')
+        + '</tr>';
+    }
+    return `<div class="tab-rolavel"><table class="tab-valores"><thead><tr><th scope="col">Horário ou condição</th>${cols.map(([, rot]) => `<th scope="col">${rot}</th>`).join('')}${temOutros ? '<th scope="col">Outros</th>' : ''}</tr></thead><tbody>${corpo}</tbody></table></div>`;
+  })();
+  const valoresHtml = tabelaValores
+    ? `<section class="secao"><h2>Valores</h2>${tabelaValores}<p class="obs-suave">Valores informados pela casa. Podem mudar sem aviso, principalmente em festas e datas especiais: confirme antes de ir. "Consumíveis" significa que o valor é convertido em consumo na casa.</p></section>`
+    : c.valores.length
     ? `<section class="secao"><h2>Valores</h2><ul class="valores">${c.valores.map((v) => `<li>${v.rotulo ? `<span>${esc(v.rotulo)}</span>` : '<span>Valor</span>'}<strong>${esc(v.valor)}</strong></li>`).join('')}</ul><p class="obs-suave">Valores informados pela casa. Podem mudar sem aviso, principalmente em festas e datas especiais: confirme antes de ir.</p></section>`
     : '';
   const regrasHtml = c.regras.length
     ? `<section class="secao"><h2>Regras de entrada</h2><ul class="regras">${c.regras.map((r) => `<li>${esc(r)}</li>`).join('')}</ul><p class="obs-suave">Respeite as regras da casa e o consentimento de todas as pessoas.</p></section>`
     : '';
 
-  const paragrafos = (c.sobre || '').split(/\n+/).filter(Boolean);
-  const sobre = paragrafos.length
+  const sobreEhHtml = ehHtml(c.sobre);
+  const sobreHtml = sobreEhHtml ? sanitizarHtml(c.sobre, (m) => warn(`"${c.nome}" (${c.id}): ${m}`)) : '';
+  const paragrafos = sobreEhHtml
+    ? (sobreHtml.match(/<p>[\s\S]*?<\/p>/g) || []).map(textoPuro).filter(Boolean)
+    : (c.sobre || '').split(/\n+/).filter(Boolean);
+  const sobre = sobreEhHtml
+    ? sobreHtml
+    : paragrafos.length
     ? paragrafos.map((p) => `<p>${esc(p)}</p>`).join('')
     : `<p style="color:#5E5B5C">A casa ainda não enviou o texto de apresentação. Se você é responsável por ela, <a class="link" style="color:#B50009;font-weight:600" href="${CTX.u('cadastre-sua-casa/')}">envie as informações</a>.</p>`;
 
@@ -631,7 +684,7 @@ ${festasHtml}
 ${valoresHtml}
 ${regrasHtml}
 ${atend.length ? `<section class="secao"><h2>Atendimento e reservas</h2><table class="horarios"><tbody>${atend.join('')}</tbody></table></section>` : ''}
-<section class="secao"><h2>Sobre a casa</h2>${sobre}</section>
+<section class="secao sobre-html">${sobreEhHtml && /<h2/i.test(sobreHtml) ? '' : '<h2>Sobre a casa</h2>'}${sobre}</section>
 <section class="secao" id="mapa"><h2>Como chegar</h2><p>${esc(c.endereco || `${c.bairro}, ${c.cidade} - ${c.uf}`)}</p><div class="mapa-links"><a class="btn" href="${mapaUrl}" target="_blank" rel="noopener">Abrir no Google Maps</a><a class="btn sec" href="${wazeUrl}" target="_blank" rel="noopener">Rota no Waze</a></div></section>
 <section class="nota"><div><strong>Algo desatualizado?</strong> Horários, valores e regras podem mudar. Confirme com a casa e nos ajude a manter tudo correto.</div><a class="btn" href="${esc(wa(`Quero corrigir informações de ${c.nome} (${c.bairro}) no Guia de Swing: ${urlAbs}`))}" target="_blank" rel="noopener">Informar correção</a></section>
 </div>

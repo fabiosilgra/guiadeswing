@@ -8,13 +8,25 @@ Feito a partir do modelo-base do Vou pra Missa.
 
 | Arquivo | Para que serve |
 |---|---|
-| `dados/guia-de-swing.xlsx` | **A planilha.** Abas `Leia-me`, `Locais`, `Horarios`, `Destaques` e `Listas` |
+| `dados/guia-de-swing.xlsx` | **A planilha.** Abas `Leia-me`, `Locais`, `Horarios`, `Valores`, `Destaques` e `Listas` |
+| `ferramentas/cadastro.html` | **Formulário visual** para cadastrar casas |
+| `dados/casas/` | Uma casa por arquivo `.json` (gerado pelo formulário) |
 | `dados/regioes.json` | Estados, regiões e o menu de regiões |
 | `dados/banners.json` | Anunciantes (imagem + link por posição) |
 | `dados/config.json` | Nome, WhatsApp, e-mail, domínio e a chave **lancado** |
 | `assets/` | Visual (`style.css`), comportamento (`app.js`), logo e ícones |
 
-## Cadastrar um lugar
+## Cadastrar uma casa pelo formulário (recomendado)
+
+1. Abra `ferramentas/cadastro.html` no navegador (duplo clique; funciona sem internet).
+2. Preencha os dados, os horários (marcando os dias), os valores (uma linha por dia e condição) e o texto da casa. O texto pode ser escrito no editor visual (botões H2, H3, lista, link) ou colado como HTML na aba "Código HTML". O painel de SEO avisa se faltam títulos, parágrafos, nome da casa etc.
+3. Clique em **Gerar arquivo da casa**. Será baixado `<id>.json`.
+4. No GitHub, abra a pasta `dados/casas` → *Add file → Upload files* → envie o arquivo → *Commit changes*. O site atualiza em 1 a 2 minutos.
+5. Para corrigir uma casa: no formulário, **Abrir casa existente**, escolha o `.json`, altere e gere de novo (envie com o mesmo nome; ele substitui o antigo).
+
+Regras do texto "sobre": o H1 da página é o nome da casa, então comece em **H2** e use **H3** dentro das seções. O site aceita só `h2, h3, h4, p, ul, ol, li, strong, em, a, br, blockquote`; o resto (scripts, estilos, div) é removido. Texto simples, sem HTML, continua funcionando. Se o id for o mesmo de uma linha da planilha, o arquivo da casa vale mais que a planilha. Arquivos que começam com `_` em `dados/casas` são ignorados (modelo: `_exemplo.json`).
+
+## Cadastrar um lugar pela planilha (alternativa)
 
 1. Abra `dados/guia-de-swing.xlsx`, aba **Locais**, e preencha a primeira linha vazia.
 2. Colunas com título **vermelho** são obrigatórias; as **cinzas** são opcionais. Passe o mouse sobre o título para ver a dica.
@@ -28,6 +40,16 @@ Feito a partir do modelo-base do Vou pra Missa.
 O gerador avisa, em português, se algo estiver errado (região inexistente, dia ilegível, id repetido, casa sem autorização). Veja os avisos na aba **Actions** do GitHub.
 
 As linhas com `exemplo = SIM` são de teste, **com nomes fictícios**. Apague-as (ou troque `publicar` para NÃO) antes de lançar.
+
+## Valores por dia e horário (aba Valores, opcional)
+
+Para casas com preços diferentes por dia ou várias condições no mesmo dia (até 23h, após 23h, opcional...). Uma linha por **dia + condição**, com o `id_local` da casa:
+- `dia`: `terça-feira`, `sex-sab`, `dom`, `todos` ou texto livre (ex.: `Véspera de feriado`). Linhas do mesmo dia ficam agrupadas; escreva igual e uma abaixo da outra.
+- `condicao`: `Até 23h`, `Após 23h`, `Opcional - qualquer horário`...
+- `casal`, `mulher_solteira`, `homem_solteiro`: texto livre (`R$ 80 consumíveis`, `VIP`, `Consulte a casa`). Coluna vazia em todas as linhas some do site.
+- `outros` (`Nome: valor; Nome: valor`) e `obs` são opcionais.
+
+O dia de hoje fica destacado. No celular a tabela vira cartões empilhados. Sem linhas nessa aba, vale a coluna `valores` simples da aba Locais.
 
 ## Texto, Google (SEO), fotos e selos
 
