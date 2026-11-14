@@ -204,12 +204,17 @@ $('amb-in').onkeydown = (e)=>{ if(e.key==='Enter'){ e.preventDefault(); const t=
 /* editor do texto */
 const ed = $('ed'), ht = $('html');
 let modo = 'v';
-function htmlAtual(){ return modo==='v' ? limpaHtml(ed.innerHTML) : ht.value.trim(); }
+const pareceCodigo = (t)=>/<\/?(h[1-6]|p|div|ul|ol|li|strong|em|a|br|span)\b[^>]*>/i.test(t);
+/* se o HTML foi colado como texto no editor visual, recupera o código */
+function recupera(h){ const t=document.createElement('div'); t.innerHTML=h;
+  if(!/&lt;\/?(h[1-6]|p|div|ul|ol|li|strong|a)\b/i.test(h) && !pareceCodigo(t.textContent)) return h;
+  t.querySelectorAll('p,div,h1,h2,h3,li,br').forEach(n=>n.after('\n')); return limpaHtml(t.textContent); }
+function htmlAtual(){ return modo==='v' ? recupera(limpaHtml(ed.innerHTML)) : ht.value.trim(); }
 function limpaHtml(h){
   const t = document.createElement('div'); t.innerHTML = h;
   t.querySelectorAll('div').forEach(d=>{ const p=document.createElement('p'); p.innerHTML=d.innerHTML; d.replaceWith(p); });
   t.querySelectorAll('*').forEach(n=>{ [...n.attributes].forEach(a=>{ if(!(n.tagName==='A'&&a.name==='href')) n.removeAttribute(a.name); }); if(n.tagName==='SPAN'||n.tagName==='FONT'){ n.replaceWith(...n.childNodes); } });
-  return t.innerHTML.replace(/<p><br><\/p>/g,'').trim();
+  return t.innerHTML.replace(/<p>(<br>|\s)*<\/p>/g,'').trim();
 }
 document.querySelector('.tools').onclick = (e)=>{
   const c = e.target.closest('button')?.dataset.c; if(!c) return; ed.focus();
@@ -221,8 +226,9 @@ document.querySelector('.tools').onclick = (e)=>{
   seo();
 };
 ed.addEventListener('paste',(e)=>{ e.preventDefault(); const h=e.clipboardData.getData('text/html'), t=e.clipboardData.getData('text/plain');
-  if(h) document.execCommand('insertHTML',false,limpaHtml(h)); else document.execCommand('insertText',false,t); });
-function troca(m){ if(m===modo) return; if(m==='c'){ ht.value = limpaHtml(ed.innerHTML); } else { ed.innerHTML = limpaHtml(ht.value); }
+  if(pareceCodigo(t)) document.execCommand('insertHTML',false,limpaHtml(t)); // código HTML colado: vira texto formatado
+  else if(h) document.execCommand('insertHTML',false,limpaHtml(h)); else document.execCommand('insertText',false,t); });
+function troca(m){ if(m===modo) return; if(m==='c'){ ht.value = recupera(limpaHtml(ed.innerHTML)); } else { ed.innerHTML = limpaHtml(ht.value); }
   modo=m; $('pv').hidden = m==='c'; $('pc').hidden = m==='v'; $('tv').classList.toggle('on',m==='v'); $('tc').classList.toggle('on',m==='c'); seo(); }
 $('tv').onclick=()=>troca('v'); $('tc').onclick=()=>troca('c');
 
