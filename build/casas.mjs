@@ -46,6 +46,7 @@ export function lerCasas(dir, warn) {
       fotos.push(rel); imagens.push({ rel, buf: img.buf });
     });
     row.fotos = lista(fotos);
+    row.sobre = recuperarHtml(row.sobre);
     L.push(row);
     for (const h of j.horarios || []) H.push({ id_local: id, tipo: s(h.tipo) || 'funcionamento', dias: s(h.dias), hora: s(h.hora), obs: s(h.obs) });
     for (const v of j.valores || []) V.push({ id_local: id, dia: s(v.dia), condicao: s(v.condicao), casal: s(v.casal), mulher_solteira: s(v.mulher_solteira), homem_solteiro: s(v.homem_solteiro), outros: pares(v.outros), obs: s(v.obs) });
@@ -104,3 +105,12 @@ export function sanitizarHtml(entrada, warn = () => {}) {
 }
 
 export const textoPuro = (html) => String(html || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+
+/* HTML colado como texto no editor visual vira "&lt;h2&gt;..." dentro de <p>. Recupera o código original. */
+export function recuperarHtml(t) {
+  t = String(t || '');
+  if (!/&lt;\/?(h[1-6]|p|div|ul|ol|li|strong|em|a|br|span)\b/i.test(t)) return t;
+  const cru = t.replace(/<\/(p|div|h[1-6]|li)>|<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+  return cru.trim();
+}
