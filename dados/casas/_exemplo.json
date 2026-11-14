@@ -1,1 +1,5 @@
-
+{"id":"gds-sp-099","nome":"Casa Exemplo Formulário","tipo":"Casa de swing","uf":"SP","cidade":"São Paulo","bairro":"Vila Mariana","regiao":"Zona Sul","endereco":"Rua Exemplo, 100","exemplo":true,"confirmado_em":"2026-11-10",
+"ambiente":["Pista de dança","Lounge","Bar"],"regras":["Somente maiores de 18 anos","Respeito e consentimento sempre"],
+"sobre":"<h2>Casa de swing na Vila Mariana</h2><p>Texto <strong>de teste</strong> com <a href=\"https://exemplo.com\">link</a>.</p><h3>Ambientes</h3><ul><li>Pista</li><li>Lounge</li></ul><script>alert(1)</script><div>solto</div>",
+"horarios":[{"tipo":"funcionamento","dias":"sex-sab","hora":"22:00-05:00","obs":""}],
+"valores":[{"dia":"sex-sab","condicao":"Até 00h","casal":"R$ 200","mulher_solteira":"R$ 50","homem_solteiro":"Consulte","outros":[],"obs":""}]}
