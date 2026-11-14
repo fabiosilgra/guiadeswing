@@ -1,0 +1,126 @@
+{
+  "id": "gds-sp-13zx",
+  "nome": "Sclub",
+  "tipo": "Casa de swing",
+  "uf": "SP",
+  "regiao": "Zona Leste",
+  "cidade": "São Paulo",
+  "bairro": "Tatuapé",
+  "endereco": "R. Platina, 266A - Tatuapé, São Paulo - SP, 03308-010",
+  "logo": "",
+  "whatsapp": "5511990214830",
+  "telefone": "",
+  "email": "",
+  "site": "https://www.sclubswing.com.br",
+  "instagram": "",
+  "confirmado_em": "2026-11-13",
+  "descricao_seo": "SClub Swing no Tatuapé: casa de swing em São Paulo com lounges, pista, bar e espaços intimistas para casais e solteiros do universo liberal.",
+  "palavras_chave": "casa de swing, casa de swing no Tatuapé, casa de swing em São Paulo, SClub Swing, balada liberal, clube liberal, troca de casais, festa liberal, swing em São Paulo, casa liberal no Tatuapé, ambiente swinger, casais e solteiros.",
+  "autorizado": true,
+  "publicar": true,
+  "ambiente": [
+    "Bar",
+    "Pista de dança",
+    "Quarto coletivo",
+    "Cabines",
+    "Quarto de casais",
+    "Glory Hole"
+  ],
+  "regras": [],
+  "fotos": [],
+  "sobre": "<div style=\"text-align: center; font-family: 'Trebuchet MS', sans-serif; color: #333333; line-height: 26px;\">\n\n  <h1 style=\"font-size: 26px; font-weight: 700; margin: 10px 0; color: #a00;\">\n    SCLUB SWING – Casa de Swing e Balada Liberal no Tatuapé\n  </h1>\n\n  <p style=\"font-size: 22px; font-weight: 500; margin: 5px 0; color: #666;\">\n    Um espaço para quem busca liberdade, interação e novas experiências no universo liberal.\n  </p>\n\n  <h2 style=\"font-size: 23px; font-weight: 600; margin: 20px 0 10px; color: #a00;\">\n    Conheça o SClub Swing\n  </h2>\n\n  <p style=\"font-size: 20px; font-weight: 400; margin: 15px 0;\">\n    O <strong>SClub Swing</strong> é uma casa de swing localizada no <strong>Tatuapé, em São Paulo</strong>, voltada a casais e solteiros que desejam conhecer o universo liberal. O ambiente reúne diversão, descontração e oportunidades de interação entre pessoas com interesses em comum.\n  </p>\n\n  <p style=\"font-size: 20px; font-weight: 400; margin: 20px 0;\">\n    A estrutura conta com lounges aconchegantes, pista animada, bar e espaços intimistas, criando diferentes ambientes para aproveitar a noite. Cada espaço oferece uma proposta própria, permitindo que os frequentadores escolham como aproveitar a experiência.\n  </p>\n\n  <p style=\"font-size: 20px; font-weight: 400; margin: 20px 0;\">\n    Para quem procura uma <strong>balada liberal</strong>, o SClub oferece um ambiente voltado à socialização, à liberdade e à descoberta de novas possibilidades. É uma opção para casais interessados na <strong>troca de casais</strong> e para quem deseja conhecer melhor o estilo de vida liberal.\n  </p>\n\n  <p style=\"font-size: 20px; font-weight: 400; margin: 20px 0;\">\n    Com uma proposta descontraída e foco na interação, o SClub Swing reúne música, entretenimento e ambientes para diferentes momentos da noite. Uma alternativa no Tatuapé para quem busca uma <strong>casa de swing em São Paulo</strong> e deseja viver novas experiências com respeito e liberdade.\n  </p>\n\n  <hr style=\"border: none; border-top: 1px solid #ccc; width: 60%; margin: 25px auto;\" />\n\n  <p style=\"font-size: 22px; font-weight: 600; margin: 10px 0;\">\n    LIBERDADE • ENERGIA • INTERAÇÃO\n  </p>\n\n</div>",
+  "horarios": [
+    {
+      "tipo": "funcionamento",
+      "dias": "ter",
+      "hora": "16:00-04:30",
+      "obs": ""
+    },
+    {
+      "tipo": "funcionamento",
+      "dias": "qua",
+      "hora": "17:00-23:00",
+      "obs": ""
+    },
+    {
+      "tipo": "funcionamento",
+      "dias": "qui",
+      "hora": "22:00-05:00",
+      "obs": ""
+    },
+    {
+      "tipo": "funcionamento",
+      "dias": "sex",
+      "hora": "22:00-04:30",
+      "obs": ""
+    },
+    {
+      "tipo": "funcionamento",
+      "dias": "sab",
+      "hora": "23:00-05:00",
+      "obs": ""
+    },
+    {
+      "tipo": "funcionamento",
+      "dias": "dom",
+      "hora": "17:00-22:00",
+      "obs": ""
+    }
+  ],
+  "valores": [
+    {
+      "dia": "Terça-feira",
+      "condicao": "",
+      "casal": "80,00",
+      "mulher_solteira": "VIP",
+      "homem_solteiro": "180",
+      "outros": [],
+      "obs": ""
+    },
+    {
+      "dia": "Quarta-feira",
+      "condicao": "",
+      "casal": "VIP",
+      "mulher_solteira": "VIP",
+      "homem_solteiro": "130,00",
+      "outros": [],
+      "obs": ""
+    },
+    {
+      "dia": "Quinta-feira",
+      "condicao": "",
+      "casal": "90,00 CONSOME 20,00",
+      "mulher_solteira": "TRANS VIP CROSS 100,00",
+      "homem_solteiro": "150,00 CONSOME 20,00",
+      "outros": [],
+      "obs": ""
+    },
+    {
+      "dia": "Sexta-feira",
+      "condicao": "",
+      "casal": "90,00 CONSOME 20,00",
+      "mulher_solteira": "VIP",
+      "homem_solteiro": "180,00 CONSOME 20,00",
+      "outros": [],
+      "obs": ""
+    },
+    {
+      "dia": "Sábado",
+      "condicao": "",
+      "casal": "90,00 CONSOME 20,00",
+      "mulher_solteira": "VIP",
+      "homem_solteiro": "180,00 CONSOME 20,00",
+      "outros": [],
+      "obs": ""
+    },
+    {
+      "dia": "Domingo",
+      "condicao": "",
+      "casal": "80,00",
+      "mulher_solteira": "VIP",
+      "homem_solteiro": "130,00",
+      "outros": [],
+      "obs": ""
+    }
+  ]
+}
