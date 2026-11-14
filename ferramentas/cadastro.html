@@ -1,1 +1,288 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cadastro de casa — Guia de Swing</title>
+<style>
+:root{--v:#DD0210;--ve:#B50009;--p:#0E0E10;--bg:#E6E1E0;--b:#D9D2D1;--s:#5E5B5C}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif;color:var(--p)}
+header{background:var(--p);color:#fff;padding:14px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;flex:1}
+main{max-width:980px;margin:18px auto;padding:0 14px 90px}
+section{background:#fff;border:1px solid var(--b);border-radius:14px;padding:20px;margin-bottom:16px}
+h2{margin:0 0 4px;font-size:20px}
+.dica{color:var(--s);font-size:14px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:4px}
+label .ob{color:var(--v)}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--b);border-radius:8px;font:inherit;background:#fff}
+input:focus,select:focus,textarea:focus,#ed:focus{outline:2px solid var(--v);outline-offset:0}
+textarea{min-height:90px;resize:vertical}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--b);background:#fff;padding:8px 12px}
+button.pri{background:var(--v);border-color:var(--v);color:#fff;font-weight:700}
+button.pri:hover{background:var(--ve)}
+button.sec{background:#fff;color:var(--p)}
+.linha{display:grid;gap:8px;align-items:end;padding:12px;border:1px solid var(--b);border-radius:10px;margin-bottom:10px;background:#FAF8F8}
+.dias{display:flex;flex-wrap:wrap;gap:6px}
+.dias label{display:inline-flex;align-items:center;gap:4px;margin:0;font-weight:500;border:1px solid var(--b);border-radius:20px;padding:4px 10px;background:#fff;cursor:pointer}
+.dias input{width:auto}
+.dias label:has(input:checked){background:var(--v);color:#fff;border-color:var(--v)}
+.hv{grid-template-columns:180px 1.4fr 120px 120px 1fr auto}
+.vv{grid-template-columns:190px 1fr 1fr 1fr 1fr auto}
+.vv .x2{grid-column:span 2}
+@media(max-width:820px){.hv,.vv{grid-template-columns:1fr 1fr}.hv .dias,.vv .x2{grid-column:1/-1}}
+.tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tools button{padding:6px 10px;font-size:14px}
+#ed{min-height:300px;border:1px solid var(--b);border-radius:8px;padding:12px;line-height:1.65;overflow:auto}
+#ed h2{font-size:22px;margin:16px 0 8px}#ed h3{font-size:18px;margin:14px 0 6px}
+#ed p{margin:0 0 10px}
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tabs button.on{background:var(--p);color:#fff;border-color:var(--p)}
+.seo{display:grid;gap:6px;margin-top:12px;font-size:14px}
+.seo div{padding:6px 10px;border-radius:8px;background:#F3F0F0}
+.seo .ok{background:#E3F4E6}.seo .ruim{background:#FDECEE}.seo .meh{background:#FFF4D6}
+.barra{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--b);padding:10px 14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;z-index:5}
+.erro{background:#FDECEE;border:1px solid var(--v);color:var(--ve);padding:10px 14px;border-radius:10px;margin-bottom:16px;display:none}
+.tag{display:inline-flex;gap:6px;background:var(--p);color:#fff;border-radius:20px;padding:3px 10px;margin:0 6px 6px 0;font-size:14px}
+.tag b{cursor:pointer}
+small.c{color:var(--s)}
+</style>
+</head>
+<body>
+<header>
+ <h1>Cadastro de casa — Guia de Swing</h1>
+ <button class="sec" id="abrir">Abrir casa existente (.json)</button>
+ <input type="file" id="arq" accept=".json,application/json" hidden>
+</header>
+<main>
+<div class="erro" id="erro"></div>
 
+<section>
+ <h2>1. Dados da casa</h2>
+ <p class="dica">Campos com <span style="color:var(--v)">*</span> são obrigatórios.</p>
+ <div class="grid">
+  <div><label>Código (id) <span class="ob">*</span></label><div style="display:flex;gap:6px"><input id="id" placeholder="gds-sp-009"><button type="button" id="gerarid" title="Sugerir um código">Sugerir</button></div><small class="c">Único para cada casa. Não repita.</small></div>
+  <div><label>Nome <span class="ob">*</span></label><input id="nome"></div>
+  <div><label>Tipo <span class="ob">*</span></label><select id="tipo"></select></div>
+  <div><label>Estado <span class="ob">*</span></label><select id="uf"></select></div>
+  <div><label>Região <span class="ob">*</span></label><select id="regiao"></select></div>
+  <div><label>Cidade <span class="ob">*</span></label><input id="cidade"></div>
+  <div><label>Bairro <span class="ob">*</span></label><input id="bairro"></div>
+  <div><label>Endereço</label><input id="endereco"></div>
+  <div><label>Logo da casa (caminho)</label><input id="logo" placeholder="assets/logos/gds-sp-009.png"><small class="c">Envie a imagem para a pasta assets/logos do GitHub.</small></div>
+  <div><label>WhatsApp (só números, com 55)</label><input id="whatsapp" inputmode="numeric" placeholder="5511999999999"></div>
+  <div><label>Telefone</label><input id="telefone"></div>
+  <div><label>E-mail</label><input id="email" type="email"></div>
+  <div><label>Site</label><input id="site" placeholder="https://"></div>
+  <div><label>Instagram</label><input id="instagram" placeholder="@casa"></div>
+  <div><label>Última confirmação dos dados</label><input id="confirmado_em" type="date"></div>
+ </div>
+ <p style="margin:14px 0 0"><label style="display:inline-flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="autorizado" checked style="width:auto"> A casa autorizou a divulgação</label>
+ &nbsp;&nbsp;<label style="display:inline-flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="publicar" checked style="width:auto"> Publicar no site</label></p>
+</section>
+
+<section>
+ <h2>2. Horários de funcionamento</h2>
+ <p class="dica">Marque os dias e escolha abertura e fechamento (pode fechar de madrugada). Alimenta o "Funciona hoje".</p>
+ <div id="horarios"></div>
+ <button type="button" class="sec" id="addh">+ Adicionar horário</button>
+</section>
+
+<section>
+ <h2>3. Valores</h2>
+ <p class="dica">Uma linha para cada dia e condição (ex.: Terça "Até 23h" e Terça "Após 23h"). Linhas do mesmo dia ficam juntas no site. Os valores são texto livre: "R$ 80 consumíveis", "VIP", "Consulte a casa".</p>
+ <div id="valores"></div>
+ <button type="button" class="sec" id="addv">+ Adicionar linha de valor</button>
+</section>
+
+<section>
+ <h2>4. Ambiente e regras</h2>
+ <div class="grid">
+  <div><label>Ambiente <small class="c">(3 a 6 itens; digite e aperte Enter)</small></label><input id="amb-in" placeholder="Ex.: Pista de dança"><div id="amb" style="margin-top:8px"></div></div>
+  <div><label>Regras de entrada <small class="c">(uma por linha, 4 a 8 itens)</small></label><textarea id="regras"></textarea></div>
+ </div>
+</section>
+
+<section>
+ <h2>5. Sobre a casa (texto para o Google)</h2>
+ <p class="dica">Use <b>H2</b> para as seções e <b>H3</b> para subtítulos. O título principal (H1) da página já é o nome da casa, não crie outro. Dá para escrever aqui ou colar o HTML pronto na aba "Código HTML".</p>
+ <div class="tabs"><button type="button" class="on" id="tv">Editor visual</button><button type="button" id="tc">Código HTML</button></div>
+ <div id="pv">
+  <div class="tools">
+   <button type="button" data-c="h2"><b>H2</b></button><button type="button" data-c="h3"><b>H3</b></button><button type="button" data-c="p">Parágrafo</button>
+   <button type="button" data-c="bold"><b>N</b></button><button type="button" data-c="italic"><i>I</i></button>
+   <button type="button" data-c="ul">• Lista</button><button type="button" data-c="ol">1. Lista</button><button type="button" data-c="link">Link</button><button type="button" data-c="limpar">Limpar formatação</button>
+  </div>
+  <div id="ed" contenteditable="true"></div>
+ </div>
+ <div id="pc" hidden><textarea id="html" style="min-height:300px;font-family:ui-monospace,Menlo,monospace;font-size:13px" placeholder="<h2>...</h2><p>...</p>"></textarea></div>
+ <div class="seo" id="seo"></div>
+ <div class="grid" style="margin-top:14px">
+  <div><label>Descrição para o Google <small class="c">(120 a 155 letras)</small></label><textarea id="descricao_seo" style="min-height:70px"></textarea><small class="c" id="dc"></small></div>
+  <div><label>Palavras-chave <small class="c">(busca interna)</small></label><textarea id="palavras_chave" style="min-height:70px"></textarea></div>
+ </div>
+</section>
+
+<section>
+ <h2>6. Fotos</h2>
+ <p class="dica">Só fachada e ambiente vazio, nunca pessoas. Uma por linha, ex.: assets/fotos/gds-sp-009/1.jpg (envie as imagens ao GitHub).</p>
+ <textarea id="fotos"></textarea>
+</section>
+</main>
+<div class="barra">
+ <button class="pri" id="gerar">Gerar arquivo da casa</button>
+ <button class="sec" id="limpa">Limpar tudo</button>
+</div>
+
+<script>
+const GEO = {"estados": {"SP": {"nome": "São Paulo", "regioes": ["Zona Norte", "Zona Sul", "Zona Leste", "Zona Oeste", "Centro", "ABC", "Guarulhos", "Grande SP", "Campinas e Região", "Litoral", "Interior", "Vale do Paraíba"]}, "RJ": {"nome": "Rio de Janeiro", "regioes": ["Rio de Janeiro e Região", "Outras Regiões"]}, "MG": {"nome": "Minas Gerais", "regioes": ["Belo Horizonte e Região", "Triângulo Mineiro", "Outras Regiões"]}, "ES": {"nome": "Espírito Santo", "regioes": ["Vitória e Região"]}, "PR": {"nome": "Paraná", "regioes": ["Curitiba", "Londrina e Região", "Maringá e Região", "Foz do Iguaçu e Região", "Outras Regiões"]}, "SC": {"nome": "Santa Catarina", "regioes": ["Florianópolis e Região"]}, "RS": {"nome": "Rio Grande do Sul", "regioes": ["Porto Alegre", "Outras Regiões"]}, "BA": {"nome": "Bahia", "regioes": ["Salvador e Região", "Outras Regiões"]}, "CE": {"nome": "Ceará", "regioes": ["Fortaleza", "Outras Regiões"]}, "PE": {"nome": "Pernambuco", "regioes": ["Recife", "Outras Regiões"]}, "PB": {"nome": "Paraíba", "regioes": ["João Pessoa"]}, "MA": {"nome": "Maranhão", "regioes": ["São Luís"]}, "AL": {"nome": "Alagoas", "regioes": ["Maceió"]}, "SE": {"nome": "Sergipe", "regioes": ["Aracaju"]}, "RN": {"nome": "Rio Grande do Norte", "regioes": ["Natal"]}, "PI": {"nome": "Piauí", "regioes": ["Teresina"]}, "GO": {"nome": "Goiás", "regioes": ["Goiânia e Região", "Sudoeste e Sul Goiano", "Outras Regiões"]}, "DF": {"nome": "Distrito Federal", "regioes": ["Distrito Federal e Região"]}, "MT": {"nome": "Mato Grosso", "regioes": ["Cuiabá"]}, "MS": {"nome": "Mato Grosso do Sul", "regioes": ["Campo Grande"]}, "AM": {"nome": "Amazonas", "regioes": ["Manaus"]}, "PA": {"nome": "Pará", "regioes": ["Belém"]}, "RO": {"nome": "Rondônia", "regioes": ["Porto Velho"]}, "AC": {"nome": "Acre", "regioes": ["Rio Branco"]}, "AP": {"nome": "Amapá", "regioes": ["Macapá"]}, "TO": {"nome": "Tocantins", "regioes": ["Palmas"]}, "RR": {"nome": "Roraima", "regioes": ["Boa Vista"]}}};
+const TIPOS = ['Casa de swing','Balada liberal','Clube liberal','Sauna liberal','Privê','Motel com ambiente liberal','Espaço liberal'];
+const DIAS = [['seg','Seg'],['ter','Ter'],['qua','Qua'],['qui','Qui'],['sex','Sex'],['sab','Sáb'],['dom','Dom']];
+const DIAS_VAL = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo','Todos os dias','Véspera de feriado','Feriado'];
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const CAMPOS = ['id','nome','tipo','uf','regiao','cidade','bairro','endereco','logo','whatsapp','telefone','email','site','instagram','confirmado_em','descricao_seo','palavras_chave'];
+
+/* selects */
+$('tipo').innerHTML = TIPOS.map(t=>`<option>${t}</option>`).join('');
+$('uf').innerHTML = Object.keys(GEO.estados).map(u=>`<option value="${u}">${u} — ${GEO.estados[u].nome}</option>`).join('');
+function regioes(sel){ const r = (GEO.estados[$('uf').value].regioes||[]).map(x=>x.nome||x); $('regiao').innerHTML = r.map(x=>`<option>${x}</option>`).join(''); if(sel) $('regiao').value = sel; }
+$('uf').onchange = ()=>regioes(); $('uf').value='SP'; regioes();
+$('gerarid').onclick = ()=>{ $('id').value = `gds-${$('uf').value.toLowerCase()}-${Date.now().toString(36).slice(-4)}`; };
+
+/* horários */
+function addH(h={}){
+  const d = document.createElement('div'); d.className='linha hv';
+  const [ab,fe] = (h.hora||'').split('-');
+  const dias = (h.dias||'').toLowerCase();
+  d.innerHTML = `<div><label>Tipo</label><select class="ht"><option value="funcionamento">Funcionamento</option><option value="festa">Festa</option><option value="atendimento">Atendimento</option></select></div>
+  <div class="dias" style="grid-column:span 1">${DIAS.map(([k,l])=>`<label><input type="checkbox" value="${k}" ${dias.split(/[\s,e]+/).includes(k)||dias==='todos'?'checked':''}>${l}</label>`).join('')}</div>
+  <div><label>Abre</label><input type="time" class="ha" value="${ab||''}"></div><div><label>Fecha</label><input type="time" class="hf" value="${fe||''}"></div>
+  <div><label>Observação / nome da festa</label><input class="ho" value="${esc(h.obs||'')}"></div><button type="button" class="sec" title="Remover">✕</button>`;
+  d.querySelector('.ht').value = h.tipo||'funcionamento';
+  d.querySelector('button').onclick = ()=>d.remove();
+  $('horarios').appendChild(d);
+}
+$('addh').onclick = ()=>addH();
+
+/* valores */
+function addV(v={}){
+  const d = document.createElement('div'); d.className='linha vv';
+  const opts = DIAS_VAL.includes(v.dia)||!v.dia ? DIAS_VAL : [v.dia,...DIAS_VAL];
+  d.innerHTML = `<div><label>Dia</label><select class="vd">${opts.map(o=>`<option>${o}</option>`).join('')}</select></div>
+  <div><label>Horário / condição</label><input class="vc" value="${esc(v.condicao||'')}" placeholder="Até 23h"></div>
+  <div><label>Casal</label><input class="v1" value="${esc(v.casal||'')}"></div>
+  <div><label>Mulher solteira</label><input class="v2" value="${esc(v.mulher_solteira||'')}"></div>
+  <div><label>Homem solteiro</label><input class="v3" value="${esc(v.homem_solteiro||'')}"></div>
+  <div style="display:flex;gap:6px"><button type="button" class="sec dup" title="Duplicar linha">⧉</button><button type="button" class="sec" title="Remover">✕</button></div>`;
+  if(v.dia) d.querySelector('.vd').value = v.dia;
+  d.dataset.outros = JSON.stringify(v.outros||[]); d.dataset.obs = v.obs||'';
+  const bs = d.querySelectorAll('button');
+  bs[0].onclick = ()=>{ addV(lerV(d)); };
+  bs[1].onclick = ()=>d.remove();
+  $('valores').appendChild(d);
+}
+const lerV = (d)=>({dia:d.querySelector('.vd').value,condicao:d.querySelector('.vc').value.trim(),casal:d.querySelector('.v1').value.trim(),mulher_solteira:d.querySelector('.v2').value.trim(),homem_solteiro:d.querySelector('.v3').value.trim(),outros:JSON.parse(d.dataset.outros||'[]'),obs:d.dataset.obs||''});
+$('addv').onclick = ()=>addV();
+
+/* ambiente (etiquetas) */
+let amb = [];
+function pintaAmb(){ $('amb').innerHTML = amb.map((a,i)=>`<span class="tag">${esc(a)} <b data-i="${i}">✕</b></span>`).join(''); }
+$('amb').onclick = (e)=>{ if(e.target.dataset.i){ amb.splice(+e.target.dataset.i,1); pintaAmb(); } };
+$('amb-in').onkeydown = (e)=>{ if(e.key==='Enter'){ e.preventDefault(); const t=e.target.value.trim(); if(t){ amb.push(t); e.target.value=''; pintaAmb(); } } };
+
+/* editor do texto */
+const ed = $('ed'), ht = $('html');
+let modo = 'v';
+function htmlAtual(){ return modo==='v' ? limpaHtml(ed.innerHTML) : ht.value.trim(); }
+function limpaHtml(h){
+  const t = document.createElement('div'); t.innerHTML = h;
+  t.querySelectorAll('div').forEach(d=>{ const p=document.createElement('p'); p.innerHTML=d.innerHTML; d.replaceWith(p); });
+  t.querySelectorAll('*').forEach(n=>{ [...n.attributes].forEach(a=>{ if(!(n.tagName==='A'&&a.name==='href')) n.removeAttribute(a.name); }); if(n.tagName==='SPAN'||n.tagName==='FONT'){ n.replaceWith(...n.childNodes); } });
+  return t.innerHTML.replace(/<p><br><\/p>/g,'').trim();
+}
+document.querySelector('.tools').onclick = (e)=>{
+  const c = e.target.closest('button')?.dataset.c; if(!c) return; ed.focus();
+  if(c==='h2'||c==='h3'||c==='p') document.execCommand('formatBlock',false,c);
+  else if(c==='bold') document.execCommand('bold'); else if(c==='italic') document.execCommand('italic');
+  else if(c==='ul') document.execCommand('insertUnorderedList'); else if(c==='ol') document.execCommand('insertOrderedList');
+  else if(c==='link'){ const u=prompt('Endereço do link (https://...)'); if(u) document.execCommand('createLink',false,u); }
+  else if(c==='limpar'){ document.execCommand('removeFormat'); document.execCommand('formatBlock',false,'p'); }
+  seo();
+};
+ed.addEventListener('paste',(e)=>{ e.preventDefault(); const h=e.clipboardData.getData('text/html'), t=e.clipboardData.getData('text/plain');
+  if(h) document.execCommand('insertHTML',false,limpaHtml(h)); else document.execCommand('insertText',false,t); });
+function troca(m){ if(m===modo) return; if(m==='c'){ ht.value = limpaHtml(ed.innerHTML); } else { ed.innerHTML = limpaHtml(ht.value); }
+  modo=m; $('pv').hidden = m==='c'; $('pc').hidden = m==='v'; $('tv').classList.toggle('on',m==='v'); $('tc').classList.toggle('on',m==='c'); seo(); }
+$('tv').onclick=()=>troca('v'); $('tc').onclick=()=>troca('c');
+
+/* SEO ao vivo */
+function seo(){
+  const h = htmlAtual(); const t = document.createElement('div'); t.innerHTML = h;
+  const txt = t.textContent.replace(/\s+/g,' ').trim(), n = txt.length;
+  const h2 = t.querySelectorAll('h2').length, h3 = t.querySelectorAll('h3').length, h1 = t.querySelectorAll('h1').length, p = t.querySelectorAll('p').length;
+  const nome = $('nome').value.trim().toLowerCase(), bairro = $('bairro').value.trim().toLowerCase();
+  const it = (c,m)=>`<div class="${c}">${m}</div>`;
+  $('seo').innerHTML = [
+    n>=800&&n<=1200 ? it('ok',`✔ Tamanho ideal: ${n} caracteres (800 a 1.200)`) : it(n<500||n>1800?'ruim':'meh',`${n<800?'Texto curto':'Texto longo'}: ${n} caracteres (ideal 800 a 1.200)`),
+    h2>=1 ? it('ok',`✔ ${h2} título(s) H2${h3?` e ${h3} H3`:''}`) : it('ruim','Falta pelo menos um título H2 (as seções do texto)'),
+    h1 ? it('meh','Há H1 no texto: o site converte para H2, pois o H1 da página já é o nome da casa') : '',
+    p>=3 ? it('ok',`✔ ${p} parágrafos`) : it('meh',`Use pelo menos 3 parágrafos (tem ${p})`),
+    nome && txt.toLowerCase().includes(nome) ? it('ok','✔ O nome da casa aparece no texto') : it('meh','Cite o nome da casa no texto'),
+    bairro && txt.toLowerCase().includes(bairro) ? it('ok','✔ O bairro aparece no texto') : it('meh','Cite o bairro no texto'),
+  ].join('');
+  const d = $('descricao_seo').value.length; $('dc').textContent = `${d} caracteres`+(d>155?' (passou de 155)':d&&d<120?' (curta)':'');
+}
+['nome','bairro','descricao_seo'].forEach(i=>$(i).addEventListener('input',seo)); ed.addEventListener('input',seo); ht.addEventListener('input',seo);
+
+/* gerar */
+const err = (m)=>{ const e=$('erro'); e.innerHTML=m; e.style.display=m?'block':'none'; if(m) scrollTo({top:0,behavior:'smooth'}); };
+function dados(){
+  const j = {}; CAMPOS.forEach(c=>j[c]=$(c).value.trim());
+  j.autorizado = $('autorizado').checked; j.publicar = $('publicar').checked;
+  j.ambiente = amb.slice(); j.regras = $('regras').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  j.fotos = $('fotos').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  j.sobre = htmlAtual();
+  j.horarios = [...document.querySelectorAll('#horarios .linha')].map(d=>{
+    const dias = [...d.querySelectorAll('.dias input:checked')].map(i=>i.value);
+    const a = d.querySelector('.ha').value, f = d.querySelector('.hf').value;
+    return {tipo:d.querySelector('.ht').value, dias:dias.length===7?'todos':dias.join(','), hora:a?(f?`${a}-${f}`:a):'', obs:d.querySelector('.ho').value.trim()};
+  }).filter(h=>h.dias&&h.hora);
+  j.valores = [...document.querySelectorAll('#valores .linha')].map(lerV).filter(v=>v.dia&&(v.casal||v.mulher_solteira||v.homem_solteiro||v.outros.length));
+  return j;
+}
+$('gerar').onclick = ()=>{
+  const j = dados(); const falta = [];
+  [['id','Código'],['nome','Nome'],['cidade','Cidade'],['bairro','Bairro']].forEach(([k,r])=>{ if(!j[k]) falta.push(r); });
+  if(!/^[a-z0-9][a-z0-9-]*$/i.test(j.id||'-')) falta.push('Código (use só letras, números e hífen)');
+  if(falta.length) return err('Falta preencher: <b>'+falta.join(', ')+'</b>.');
+  if(!j.horarios.length && !confirm('Nenhum horário de funcionamento foi preenchido. Gerar assim mesmo?')) return;
+  err('');
+  const blob = new Blob([JSON.stringify(j,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = j.id+'.json'; a.click();
+  setTimeout(()=>alert('Arquivo '+j.id+'.json baixado.\n\nAgora envie-o para a pasta dados/casas do GitHub (Add file → Upload files).'),200);
+};
+
+/* abrir existente */
+$('abrir').onclick = ()=>$('arq').click();
+$('arq').onchange = async (e)=>{ const f=e.target.files[0]; if(!f) return; try{ preencher(JSON.parse(await f.text())); err(''); }catch(x){ err('Não consegui ler esse arquivo.'); } e.target.value=''; };
+function preencher(j){
+  limpar(true);
+  CAMPOS.forEach(c=>{ if(c!=='regiao'&&c!=='uf'&&j[c]!=null) $(c).value=j[c]; });
+  if(j.uf){ $('uf').value=j.uf; } regioes(j.regiao);
+  $('autorizado').checked = j.autorizado!==false; $('publicar').checked = j.publicar!==false;
+  amb = (j.ambiente||[]).slice(); pintaAmb();
+  $('regras').value=(j.regras||[]).join('\n'); $('fotos').value=(j.fotos||[]).join('\n');
+  ed.innerHTML = limpaHtml(j.sobre||''); ht.value = j.sobre||'';
+  (j.horarios||[]).forEach(addH); (j.valores||[]).forEach(addV); seo();
+}
+function limpar(quieto){ if(!quieto && !confirm('Apagar tudo o que está preenchido?')) return;
+  document.querySelectorAll('input:not([type=checkbox]):not([type=file]),textarea').forEach(i=>i.value=''); ed.innerHTML=''; ht.value='';
+  $('horarios').innerHTML=''; $('valores').innerHTML=''; amb=[]; pintaAmb(); $('uf').value='SP'; regioes(); $('autorizado').checked=true; $('publicar').checked=true; seo(); }
+$('limpa').onclick = ()=>limpar();
+addH({tipo:'funcionamento'}); addV(); seo();
+</script>
+</body>
+</html>
