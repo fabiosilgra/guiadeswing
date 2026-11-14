@@ -24,6 +24,8 @@ Feito a partir do modelo-base do Vou pra Missa.
 4. No GitHub, abra a pasta `dados/casas` → *Add file → Upload files* → envie o arquivo → *Commit changes*. O site atualiza em 1 a 2 minutos.
 5. Para corrigir uma casa: no formulário, **Abrir casa existente**, escolha o `.json`, altere e gere de novo (envie com o mesmo nome; ele substitui o antigo).
 
+**Fotos e logo pelo formulário:** na seção 6, clique ou arraste as fotos (até 8; a primeira é a capa; arraste para reordenar) e escolha o logo na seção 1. O formulário reduz tudo sozinho (fotos ~1200 px e até ~230 KB; logo 400 px) e guarda dentro do `.json` da casa. Ao gerar o site, elas viram `assets/fotos/<id>/` e `assets/logos/<id>`. Não precisa enviar imagem nem preencher caminho. Só fachada e ambiente vazio, nunca pessoas ou imagens explícitas. Cada foto pesa ~150 a 230 KB, então o arquivo de uma casa com 5 fotos fica em torno de 1 MB. Banners e imagens de destaque continuam sendo enviados à pasta `assets/` do GitHub.
+
 Regras do texto "sobre": o H1 da página é o nome da casa, então comece em **H2** e use **H3** dentro das seções. O site aceita só `h2, h3, h4, p, ul, ol, li, strong, em, a, br, blockquote`; o resto (scripts, estilos, div) é removido. Texto simples, sem HTML, continua funcionando. Se o id for o mesmo de uma linha da planilha, o arquivo da casa vale mais que a planilha. Arquivos que começam com `_` em `dados/casas` são ignorados (modelo: `_exemplo.json`).
 
 ## Cadastrar um lugar pela planilha (alternativa)

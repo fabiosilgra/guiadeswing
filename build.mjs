@@ -799,6 +799,7 @@ const gravar = (rel, conteudo) => {
 };
 for (const p of paginas) gravar(p.rel, p.html);
 fs.cpSync(path.join(ROOT, 'assets'), path.join(OUT, 'assets'), { recursive: true });
+for (const im of casasJson.imagens) gravar(im.rel, im.buf); // logos e fotos enviados pelo formulário
 
 // Dados para busca e "Minha lista" (carregados só quando necessário)
 const dadosJs = locais.map((c) => ({
