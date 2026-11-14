@@ -71,7 +71,7 @@ small.c{color:var(--s)}
   <div><label>Cidade <span class="ob">*</span></label><input id="cidade"></div>
   <div><label>Bairro <span class="ob">*</span></label><input id="bairro"></div>
   <div><label>Endereço</label><input id="endereco"></div>
-  <div><label>Logo da casa (caminho)</label><input id="logo" placeholder="assets/logos/gds-sp-009.png"><small class="c">Envie a imagem para a pasta assets/logos do GitHub.</small></div>
+  <div><label>Logo da casa</label><input type="file" id="logo-arq" accept="image/*"><div id="logo-pv" style="margin-top:6px"></div><small class="c">Quadrado, de preferência. O formulário reduz sozinho.</small></div>
   <div><label>WhatsApp (só números, com 55)</label><input id="whatsapp" inputmode="numeric" placeholder="5511999999999"></div>
   <div><label>Telefone</label><input id="telefone"></div>
   <div><label>E-mail</label><input id="email" type="email"></div>
@@ -127,8 +127,11 @@ small.c{color:var(--s)}
 
 <section>
  <h2>6. Fotos</h2>
- <p class="dica">Só fachada e ambiente vazio, nunca pessoas. Uma por linha, ex.: assets/fotos/gds-sp-009/1.jpg (envie as imagens ao GitHub).</p>
- <textarea id="fotos"></textarea>
+ <p class="dica">Só fachada e ambiente vazio, <b>nunca pessoas nem imagens explícitas</b>. Escolha ou arraste as fotos: o formulário reduz o tamanho sozinho e guarda tudo dentro do arquivo da casa. A primeira foto é a capa; arraste para reordenar. Até 8 fotos.</p>
+ <div id="drop" style="border:2px dashed var(--b);border-radius:12px;padding:22px;text-align:center;color:var(--s);cursor:pointer">Clique aqui ou arraste as fotos<input type="file" id="fotos-arq" accept="image/*" multiple hidden></div>
+ <div id="fotos-pv" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px"></div>
+ <small class="c" id="peso"></small>
+ <details style="margin-top:10px"><summary>Já tenho fotos no GitHub (caminhos)</summary><textarea id="fotos" placeholder="assets/fotos/gds-sp-009/1.jpg"></textarea></details>
 </section>
 </main>
 <div class="barra">
@@ -143,7 +146,7 @@ const DIAS = [['seg','Seg'],['ter','Ter'],['qua','Qua'],['qui','Qui'],['sex','Se
 const DIAS_VAL = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo','Todos os dias','Véspera de feriado','Feriado'];
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-const CAMPOS = ['id','nome','tipo','uf','regiao','cidade','bairro','endereco','logo','whatsapp','telefone','email','site','instagram','confirmado_em','descricao_seo','palavras_chave'];
+const CAMPOS = ['id','nome','tipo','uf','regiao','cidade','bairro','endereco','whatsapp','telefone','email','site','instagram','confirmado_em','descricao_seo','palavras_chave'];
 
 /* selects */
 $('tipo').innerHTML = TIPOS.map(t=>`<option>${t}</option>`).join('');
@@ -237,6 +240,37 @@ function seo(){
 }
 ['nome','bairro','descricao_seo'].forEach(i=>$(i).addEventListener('input',seo)); ed.addEventListener('input',seo); ht.addEventListener('input',seo);
 
+/* imagens: reduz no navegador e guarda como texto (data URI) dentro do .json */
+let logoDados = '', fotosDados = [];
+function carrega(file){ return new Promise((ok,no)=>{ const u=URL.createObjectURL(file), i=new Image(); i.onload=()=>{URL.revokeObjectURL(u);ok(i)}; i.onerror=()=>no(); i.src=u; }); }
+async function reduz(file, max, tipo, quadrado){
+  const img = await carrega(file); let w=img.width, h=img.height, sx=0, sy=0, sw=w, sh=h;
+  if(quadrado){ const l=Math.min(w,h); sx=(w-l)/2; sy=(h-l)/2; sw=sh=l; w=h=Math.min(l,max); }
+  else { const k=Math.min(1,max/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k); }
+  const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d');
+  if(tipo==='image/jpeg'){ x.fillStyle='#fff'; x.fillRect(0,0,w,h); }
+  x.drawImage(img,sx,sy,sw,sh,0,0,w,h);
+  let q=.85, d=c.toDataURL(tipo,q); const lim = tipo==='image/png'?380*1024:230*1024;
+  while(tipo==='image/jpeg' && d.length*0.75>lim && q>.4){ q-=.07; d=c.toDataURL(tipo,q); }
+  return d;
+}
+$('logo-arq').onchange = async (e)=>{ const f=e.target.files[0]; if(!f) return;
+  try{ const png = f.type==='image/png'; logoDados = await reduz(f,400,png?'image/png':'image/jpeg',true); pintaLogo(); }catch(x){ err('Não consegui ler esse logo.'); } };
+function pintaLogo(){ $('logo-pv').innerHTML = logoDados ? `<img src="${logoDados}" width="64" height="64" style="border-radius:12px;border:1px solid var(--b);object-fit:cover"> <button type="button" class="sec" id="logo-x">Remover</button>` : '';
+  const b=$('logo-x'); if(b) b.onclick=()=>{ logoDados=''; $('logo-arq').value=''; pintaLogo(); }; peso(); }
+async function addFotos(files){ for(const f of files){ if(fotosDados.length>=8){ alert('Máximo de 8 fotos.'); break; }
+  if(!f.type.startsWith('image/')) continue; try{ fotosDados.push(await reduz(f,1200,'image/jpeg',false)); }catch(x){} } pintaFotos(); }
+let arrasta=-1;
+function pintaFotos(){ $('fotos-pv').innerHTML = fotosDados.map((d,i)=>`<div draggable="true" data-i="${i}" style="position:relative;cursor:grab"><img src="${d}" height="90" style="border-radius:8px;border:1px solid var(--b);display:block">${i===0?'<span style="position:absolute;left:4px;top:4px;background:var(--v);color:#fff;border-radius:6px;padding:1px 6px;font-size:12px">Capa</span>':''}<button type="button" data-x="${i}" style="position:absolute;right:4px;top:4px;padding:0 7px">✕</button></div>`).join(''); peso(); }
+$('fotos-pv').onclick = (e)=>{ if(e.target.dataset.x!=null){ fotosDados.splice(+e.target.dataset.x,1); pintaFotos(); } };
+$('fotos-pv').ondragstart = (e)=>{ const i=e.target.closest('[data-i]'); arrasta = i? +i.dataset.i : -1; };
+$('fotos-pv').ondragover = (e)=>e.preventDefault();
+$('fotos-pv').ondrop = (e)=>{ e.preventDefault(); e.stopPropagation(); const t=e.target.closest('[data-i]'); if(t&&arrasta>=0){ const [m]=fotosDados.splice(arrasta,1); fotosDados.splice(+t.dataset.i,0,m); arrasta=-1; pintaFotos(); } };
+function peso(){ const kb=Math.round((logoDados.length+fotosDados.reduce((a,b)=>a+b.length,0))*0.75/1024); $('peso').textContent = kb? `Imagens: ${fotosDados.length} foto(s)${logoDados?' + logo':''} · ${kb} KB no arquivo`:''; }
+const drop=$('drop'); drop.onclick=()=>$('fotos-arq').click(); $('fotos-arq').onchange=async(e)=>{ await addFotos([...e.target.files]); e.target.value=''; };
+drop.ondragover=(e)=>{ e.preventDefault(); drop.style.borderColor='var(--v)'; }; drop.ondragleave=()=>{ drop.style.borderColor=''; };
+drop.ondrop=async(e)=>{ e.preventDefault(); drop.style.borderColor=''; await addFotos([...e.dataTransfer.files]); };
+
 /* gerar */
 const err = (m)=>{ const e=$('erro'); e.innerHTML=m; e.style.display=m?'block':'none'; if(m) scrollTo({top:0,behavior:'smooth'}); };
 function dados(){
@@ -245,6 +279,8 @@ function dados(){
   j.ambiente = amb.slice(); j.regras = $('regras').value.split('\n').map(x=>x.trim()).filter(Boolean);
   j.fotos = $('fotos').value.split('\n').map(x=>x.trim()).filter(Boolean);
   j.sobre = htmlAtual();
+  j.logo = $('logo-caminho') ? $('logo-caminho').value.trim() : (window._logoCaminho||'');
+  if(logoDados) j.logo_dados = logoDados; if(fotosDados.length) j.fotos_dados = fotosDados.slice();
   j.horarios = [...document.querySelectorAll('#horarios .linha')].map(d=>{
     const dias = [...d.querySelectorAll('.dias input:checked')].map(i=>i.value);
     const a = d.querySelector('.ha').value, f = d.querySelector('.hf').value;
@@ -271,6 +307,7 @@ $('arq').onchange = async (e)=>{ const f=e.target.files[0]; if(!f) return; try{ 
 function preencher(j){
   limpar(true);
   CAMPOS.forEach(c=>{ if(c!=='regiao'&&c!=='uf'&&j[c]!=null) $(c).value=j[c]; });
+  window._logoCaminho = j.logo||''; logoDados = j.logo_dados||''; fotosDados = (j.fotos_dados||[]).slice(); pintaLogo(); pintaFotos();
   if(j.uf){ $('uf').value=j.uf; } regioes(j.regiao);
   $('autorizado').checked = j.autorizado!==false; $('publicar').checked = j.publicar!==false;
   amb = (j.ambiente||[]).slice(); pintaAmb();
@@ -279,7 +316,7 @@ function preencher(j){
   (j.horarios||[]).forEach(addH); (j.valores||[]).forEach(addV); seo();
 }
 function limpar(quieto){ if(!quieto && !confirm('Apagar tudo o que está preenchido?')) return;
-  document.querySelectorAll('input:not([type=checkbox]):not([type=file]),textarea').forEach(i=>i.value=''); ed.innerHTML=''; ht.value='';
+  document.querySelectorAll('input:not([type=checkbox]):not([type=file]),textarea').forEach(i=>i.value=''); ed.innerHTML=''; ht.value=''; logoDados=''; fotosDados=[]; window._logoCaminho=''; $('logo-arq').value=''; pintaLogo(); pintaFotos();
   $('horarios').innerHTML=''; $('valores').innerHTML=''; amb=[]; pintaAmb(); $('uf').value='SP'; regioes(); $('autorizado').checked=true; $('publicar').checked=true; seo(); }
 $('limpa').onclick = ()=>limpar();
 addH({tipo:'funcionamento'}); addV(); seo();
