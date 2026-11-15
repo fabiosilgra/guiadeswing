@@ -95,6 +95,24 @@ Tamanhos: **topo 1375 × 280**, **laterais (2, um abaixo do outro) 420 × 551**,
 
 **Topo fixo ou carrossel:** em `topo`, a lista `itens` aceita quantas imagens você quiser. Com **uma**, o banner é fixo. Com **duas ou mais**, vira carrossel com troca suave (fade); `intervalo` é o tempo em segundos entre as trocas. O carrossel pausa quando o mouse está em cima e não troca sozinho para quem usa "reduzir movimento".
 
+## Anúncios por página (um arquivo por anunciante)
+
+Cada anunciante tem um arquivo em `dados/anuncios/<codigo>.json`, gerado por `ferramentas/anuncio.html`:
+1. Abra `ferramentas/anuncio.html` no navegador, preencha anunciante, link, datas (opcionais) e escolha **em quais páginas** o anúncio aparece: site inteiro, página de um estado, de uma região/zona, de um tipo (ex.: baladas de SP) ou de uma casa. A caixinha "páginas de dentro" faz o pacote (estado inclui regiões, tipos e casas; região e tipo incluem as casas).
+2. Envie as imagens dos espaços comprados (topo, lateral 1 e 2, rodapé 1 a 3). O formulário ajusta o tamanho e avisa.
+3. Clique em **Gerar arquivo do anúncio** e envie o `.json` para `dados/anuncios/` no GitHub. Para alterar, use "Abrir anúncio existente", edite e envie de novo com o mesmo nome. Para encerrar antes, desmarque "Anúncio ativo" ou ponha uma data final.
+4. **Exclusivo:** um anunciante por espaço e página. Se houver disputa, vence quem marcou a página mais de perto (a própria página vence "páginas de dentro", que vence "site inteiro"); no empate, quem começou antes. O gerador avisa o conflito.
+5. Anúncio fora do prazo sai sozinho (o site é refeito todo dia às 06h de Brasília; ou ao enviar qualquer arquivo). Espaço sem anúncio mostra "Anuncie aqui" (ou os banners de `dados/banners.json`, se preenchidos).
+6. O link recebe UTM e os cliques são contados por anúncio e espaço (evento `banner-<codigo>-<espaco>`).
+
+## Publicar um banner e medir o retorno (modo simples, banners.json)
+
+1. Envie a imagem (no tamanho exato) para `assets/banners/` no GitHub (*Add file → Upload files*).
+2. Em `dados/banners.json`, preencha `img` (ex.: `assets/banners/swingr.jpg`), `link` (ex.: `https://www.swingr.com.br/`), `alt` (texto curto) e, se quiser, `campanha` (ex.: `swingr-nov`). Salve (*Commit changes*).
+3. **UTM automático:** o site acrescenta ao link `utm_source=guiadeswing&utm_medium=banner&utm_campaign=<campanha>&utm_content=<posição>` (topo-1, topo-2, lateral1, rodape2...). O anunciante vê isso no Google Analytics ou ferramenta dele. Se o link já tiver `utm_`, nada é alterado.
+4. **Cliques medidos aqui (sem cookies, Umami):** crie conta grátis em umami.is, cadastre o site e copie o *Website ID*. Em `dados/config.json` acrescente `"estatisticas": { "umamiId": "COLE-O-ID" }`. Só funciona com `"lancado": true`. No painel, em *Events*, aparecem `banner-topo-1`, `banner-lateral1` etc., com contagem de cliques por banner.
+5. Para saber a taxa de clique, compare os cliques do banner com as visitas das páginas onde ele aparece (painel do Umami).
+
 ## Publicar no GitHub (uma vez)
 
 1. Crie o repositório `guiadeswing` (público) e envie **todos** os arquivos desta pasta, inclusive `.github`.

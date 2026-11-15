@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cadastro de anúncio — Guia de Swing</title>
+<style>
+:root{--v:#DD0210;--ve:#B50009;--p:#0E0E10;--bg:#E6E1E0;--b:#D9D2D1;--s:#5E5B5C}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif;color:var(--p)}
+header{background:var(--p);color:#fff;padding:14px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;flex:1}
+main{max-width:980px;margin:18px auto;padding:0 14px 90px}
+section{background:#fff;border:1px solid var(--b);border-radius:14px;padding:20px;margin-bottom:16px}
+h2{margin:0 0 4px;font-size:20px}
+.dica{color:var(--s);font-size:14px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:4px}
+.ob{color:var(--v)}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--b);border-radius:8px;font:inherit;background:#fff}
+input:focus,select:focus{outline:2px solid var(--v)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--b);background:#fff;padding:8px 12px}
+button.pri{background:var(--v);border-color:var(--v);color:#fff;font-weight:700}
+.esp{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center;padding:12px;border:1px solid var(--b);border-radius:10px;margin-bottom:10px;background:#FAF8F8}
+.esp img{max-width:100%;max-height:110px;border:1px solid var(--b);border-radius:6px;display:block;margin-top:6px}
+.esp small{color:var(--s)}.esp .av{color:#8a5a00;display:block;font-size:13px}
+.pg{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:end}
+@media(max-width:820px){.pg,.esp{grid-template-columns:1fr 1fr}}
+.tag{display:inline-flex;gap:8px;align-items:center;background:var(--p);color:#fff;border-radius:20px;padding:4px 12px;margin:0 6px 6px 0;font-size:14px}
+.tag b{cursor:pointer}
+.barra{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--b);padding:10px 14px;display:flex;gap:10px;justify-content:center;z-index:5}
+.erro{background:#FDECEE;border:1px solid var(--v);color:var(--ve);padding:10px 14px;border-radius:10px;margin-bottom:16px;display:none}
+.res{background:#F3F0F0;border-radius:10px;padding:10px 14px;font-size:14px}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:500;margin:0}.chk input{width:auto}
+</style>
+</head>
+<body>
+<header><h1>Cadastro de anúncio — Guia de Swing</h1><button id="abrir">Abrir anúncio existente (.json)</button><input type="file" id="arq" accept=".json" hidden></header>
+<main>
+<div class="erro" id="erro"></div>
+
+<section>
+ <h2>1. Anunciante</h2>
+ <div class="grid">
+  <div><label>Nome do anunciante <span class="ob">*</span></label><input id="anunciante" placeholder="Swingr"></div>
+  <div><label>Código do anúncio <span class="ob">*</span></label><input id="id" placeholder="swingr-sp"><small style="color:var(--s)">Preenchido sozinho; único para cada compra.</small></div>
+  <div><label>Link de destino <span class="ob">*</span></label><input id="link" placeholder="https://www.swingr.com.br"></div>
+  <div><label>Nome da campanha</label><input id="campanha" placeholder="swingr-nov"><small style="color:var(--s)">Aparece nos relatórios e no link.</small></div>
+  <div><label>Texto alternativo da imagem</label><input id="alt" placeholder="Swingr"></div>
+  <div><label>Começa em</label><input type="date" id="inicio"></div>
+  <div><label>Termina em</label><input type="date" id="fim"><small style="color:var(--s)">Sai do site sozinho depois desta data. Vazio = sem fim.</small></div>
+ </div>
+ <p style="margin:12px 0 0"><label class="chk"><input type="checkbox" id="ativo" checked> Anúncio ativo</label></p>
+</section>
+
+<section>
+ <h2>2. Em quais páginas aparece</h2>
+ <p class="dica">Escolha o tipo de página, complete e clique em <b>Adicionar</b>. Pode adicionar quantas quiser. Um espaço é exclusivo: se dois anúncios disputam o mesmo espaço na mesma página, vence o que marcou a página mais de perto; no empate, o que começou antes.</p>
+ <div class="pg">
+  <div><label>Tipo de página</label><select id="p-tipo"><option value="site">Site inteiro</option><option value="estado">Página de um estado</option><option value="regiao">Página de uma região / zona</option><option value="categoria">Página de um tipo (ex.: baladas)</option><option value="casa">Página de uma casa</option></select></div>
+  <div id="w-uf"><label>Estado</label><select id="p-uf"></select></div>
+  <div id="w-reg"><label>Região / zona</label><select id="p-reg"></select></div>
+  <div id="w-cat"><label>Tipo de lugar</label><select id="p-cat"></select></div>
+  <div id="w-casa"><label>Casa (código)</label><input id="p-casa" list="lista-casas" placeholder="digite para buscar"><datalist id="lista-casas"></datalist></div>
+  <button type="button" class="pri" id="p-add">Adicionar</button>
+ </div>
+ <p style="margin:10px 0" id="w-filhas"><label class="chk"><input type="checkbox" id="p-filhas"> Incluir também as páginas de dentro (pacote)</label> <small style="color:var(--s)">Estado inclui regiões, tipos e casas dele; região e tipo incluem as casas.</small></p>
+ <div id="paginas" style="margin-top:8px"></div>
+ <small style="color:var(--s)" id="casas-st"></small>
+</section>
+
+<section>
+ <h2>3. Imagens de cada espaço</h2>
+ <p class="dica">Envie só as imagens dos espaços que o anunciante comprou. Se a imagem não tiver o tamanho exato, o formulário ajusta e avisa. Sem pessoas ou imagens explícitas.</p>
+ <div id="espacos"></div>
+</section>
+
+<section><h2>Resumo</h2><div class="res" id="res"></div></section>
+</main>
+<div class="barra"><button class="pri" id="gerar">Gerar arquivo do anúncio</button><button id="limpa">Limpar tudo</button></div>
+
+<script>
+const GEO = {"SP": {"nome": "São Paulo", "regioes": ["Zona Norte", "Zona Sul", "Zona Leste", "Zona Oeste", "Centro", "ABC", "Guarulhos", "Grande SP", "Campinas e Região", "Litoral", "Interior", "Vale do Paraíba"]}, "RJ": {"nome": "Rio de Janeiro", "regioes": ["Rio de Janeiro e Região", "Outras Regiões"]}, "MG": {"nome": "Minas Gerais", "regioes": ["Belo Horizonte e Região", "Triângulo Mineiro", "Outras Regiões"]}, "ES": {"nome": "Espírito Santo", "regioes": ["Vitória e Região"]}, "PR": {"nome": "Paraná", "regioes": ["Curitiba", "Londrina e Região", "Maringá e Região", "Foz do Iguaçu e Região", "Outras Regiões"]}, "SC": {"nome": "Santa Catarina", "regioes": ["Florianópolis e Região"]}, "RS": {"nome": "Rio Grande do Sul", "regioes": ["Porto Alegre", "Outras Regiões"]}, "BA": {"nome": "Bahia", "regioes": ["Salvador e Região", "Outras Regiões"]}, "CE": {"nome": "Ceará", "regioes": ["Fortaleza", "Outras Regiões"]}, "PE": {"nome": "Pernambuco", "regioes": ["Recife", "Outras Regiões"]}, "PB": {"nome": "Paraíba", "regioes": ["João Pessoa"]}, "MA": {"nome": "Maranhão", "regioes": ["São Luís"]}, "AL": {"nome": "Alagoas", "regioes": ["Maceió"]}, "SE": {"nome": "Sergipe", "regioes": ["Aracaju"]}, "RN": {"nome": "Rio Grande do Norte", "regioes": ["Natal"]}, "PI": {"nome": "Piauí", "regioes": ["Teresina"]}, "GO": {"nome": "Goiás", "regioes": ["Goiânia e Região", "Sudoeste e Sul Goiano", "Outras Regiões"]}, "DF": {"nome": "Distrito Federal", "regioes": ["Distrito Federal e Região"]}, "MT": {"nome": "Mato Grosso", "regioes": ["Cuiabá"]}, "MS": {"nome": "Mato Grosso do Sul", "regioes": ["Campo Grande"]}, "AM": {"nome": "Amazonas", "regioes": ["Manaus"]}, "PA": {"nome": "Pará", "regioes": ["Belém"]}, "RO": {"nome": "Rondônia", "regioes": ["Porto Velho"]}, "AC": {"nome": "Acre", "regioes": ["Rio Branco"]}, "AP": {"nome": "Amapá", "regioes": ["Macapá"]}, "TO": {"nome": "Tocantins", "regioes": ["Palmas"]}, "RR": {"nome": "Roraima", "regioes": ["Boa Vista"]}};
+const SITE = "https://fabiosilgra.github.io/guiadeswing";
+const CATS = [["casa-de-swing", "Casas de swing"], ["balada-liberal", "Baladas liberais"], ["clube-liberal", "Clubes liberais"], ["sauna-liberal", "Saunas liberais"], ["prive", "Privês"], ["motel-liberal", "Motéis com ambiente liberal"], ["outro", "Espaços liberais"]];
+const ESP = [['topo','Topo',1375,280],['lateral1','Lateral 1',420,551],['lateral2','Lateral 2',420,551],['rodape1','Rodapé 1',436,326],['rodape2','Rodapé 2',436,326],['rodape3','Rodapé 3',436,326]];
+const $ = (i)=>document.getElementById(i);
+const esc = (t)=>String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const slug = (t)=>String(t).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+const err = (m)=>{ const e=$('erro'); e.innerHTML=m; e.style.display=m?'block':'none'; if(m) scrollTo({top:0,behavior:'smooth'}); };
+
+/* selects */
+$('p-uf').innerHTML = Object.keys(GEO).map(u=>`<option value="${u}">${u} — ${GEO[u].nome}</option>`).join('');
+const regioes = ()=>{ $('p-reg').innerHTML = GEO[$('p-uf').value].regioes.map(r=>`<option value="${slug(r)}">${r}</option>`).join(''); };
+$('p-uf').onchange = regioes; $('p-uf').value='SP'; regioes();
+$('p-cat').innerHTML = CATS.map(([s,n])=>`<option value="${s}">${n}</option>`).join('');
+function campos(){ const t=$('p-tipo').value;
+  $('w-uf').hidden = t==='site'||t==='casa'; $('w-reg').hidden = t!=='regiao'; $('w-cat').hidden = t!=='categoria'; $('w-casa').hidden = t!=='casa';
+  $('w-filhas').hidden = t==='site'||t==='casa'; }
+$('p-tipo').onchange = campos; campos();
+
+/* páginas escolhidas */
+let paginas = [];
+const nomeUF = (u)=>GEO[u]?GEO[u].nome:u;
+function rotulo(a){
+  const f = a.filhas ? ' + páginas de dentro' : '';
+  if(a.tipo==='site') return 'Site inteiro';
+  if(a.tipo==='estado') return `Estado: ${nomeUF(a.uf)}${f}`;
+  if(a.tipo==='regiao') return `Região: ${(GEO[a.uf]?.regioes||[]).find(r=>slug(r)===a.regiao)||a.regiao} (${a.uf})${f}`;
+  if(a.tipo==='categoria') return `Tipo: ${(CATS.find(c=>c[0]===a.categoria)||[,a.categoria])[1]} (${a.uf})${f}`;
+  return `Casa: ${a.id}`;
+}
+function pintaPaginas(){ $('paginas').innerHTML = paginas.map((a,i)=>`<span class="tag">${esc(rotulo(a))} <b data-i="${i}" title="Remover">✕</b></span>`).join('') || '<small style="color:var(--s)">Nenhuma página escolhida ainda.</small>'; resumo(); }
+$('paginas').onclick = (e)=>{ if(e.target.dataset.i!=null){ paginas.splice(+e.target.dataset.i,1); pintaPaginas(); } };
+$('p-add').onclick = ()=>{ const t=$('p-tipo').value, a={tipo:t}; 
+  if(t==='estado'||t==='regiao'||t==='categoria') a.uf=$('p-uf').value;
+  if(t==='regiao') a.regiao=$('p-reg').value; if(t==='categoria') a.categoria=$('p-cat').value;
+  if(t==='estado'||t==='regiao'||t==='categoria') a.filhas=$('p-filhas').checked;
+  if(t==='casa'){ const v=$('p-casa').value.trim(); if(!v) return err('Digite o código da casa.'); a.id=v.split(' — ')[0].trim(); $('p-casa').value=''; }
+  err(''); if(!paginas.some(x=>JSON.stringify(x)===JSON.stringify(a))) paginas.push(a); pintaPaginas(); };
+
+/* casas do site (lista para busca) */
+fetch(SITE+'/data/locais.js').then(r=>r.text()).then(t=>{ const j=JSON.parse(t.slice(t.indexOf('=')+1).replace(/;\s*$/,''));
+  $('lista-casas').innerHTML = j.map(c=>`<option value="${esc(c.id)} — ${esc(c.nome)}">`).join(''); $('casas-st').textContent = `${j.length} casas carregadas do site para busca.`; })
+  .catch(()=>{ $('casas-st').textContent = 'Não consegui carregar a lista de casas do site (sem internet?). Digite o código da casa manualmente.'; });
+
+/* imagens */
+const dados = {}; // espaço -> data URI
+$('espacos').innerHTML = ESP.map(([k,n,w,h])=>`<div class="esp"><div><b>${n}</b><br><small>${w} × ${h} px</small></div><div><input type="file" accept="image/*" data-k="${k}"><span class="av" id="av-${k}"></span><div id="pv-${k}"></div></div></div>`).join('');
+const carrega = (f)=>new Promise((ok,no)=>{ const u=URL.createObjectURL(f), i=new Image(); i.onload=()=>{URL.revokeObjectURL(u);ok(i)}; i.onerror=no; i.src=u; });
+const lerURL = (f)=>new Promise((ok)=>{ const r=new FileReader(); r.onload=()=>ok(r.result); r.readAsDataURL(f); });
+async function prepara(f,w,h){
+  const img = await carrega(f); const LIM=1.2*1024*1024;
+  if(img.width===w && img.height===h && f.size<=LIM && /^image\/(png|jpeg)$/.test(f.type)) return {d:await lerURL(f), av:''};
+  const k=Math.max(w/img.width,h/img.height), sw=w/k, sh=h/k, sx=(img.width-sw)/2, sy=(img.height-sh)/2;
+  const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(img,sx,sy,sw,sh,0,0,w,h);
+  let q=.9, d=c.toDataURL('image/jpeg',q); while(d.length*.75>LIM && q>.5){ q-=.07; d=c.toDataURL('image/jpeg',q); }
+  const iguais = Math.abs(img.width/img.height - w/h) < .02;
+  return {d, av: `A imagem tinha ${img.width}×${img.height}; foi ${iguais?'redimensionada':'redimensionada e cortada nas bordas'} para ${w}×${h}.`};
+}
+function pintaEsp(k){ $('pv-'+k).innerHTML = dados[k] ? `<img src="${dados[k]}"> <button type="button" data-rm="${k}" style="margin-top:6px">Remover imagem</button>` : ''; resumo(); }
+$('espacos').onchange = async (e)=>{ const k=e.target.dataset.k; if(!k||!e.target.files[0]) return; const [,,w,h]=ESP.find(x=>x[0]===k);
+  try{ const r=await prepara(e.target.files[0],w,h); dados[k]=r.d; $('av-'+k).textContent=r.av; pintaEsp(k); }catch(x){ err('Não consegui ler essa imagem.'); } };
+$('espacos').onclick = (e)=>{ const k=e.target.dataset.rm; if(k){ delete dados[k]; $('av-'+k).textContent=''; document.querySelector(`[data-k="${k}"]`).value=''; pintaEsp(k); } };
+
+/* resumo, id automático */
+let idManual=false;
+$('id').addEventListener('input',()=>{ idManual = $('id').value!=='' && $('id').value!==slug($('anunciante').value); });
+$('anunciante').addEventListener('input',()=>{ if(!idManual) $('id').value=slug($('anunciante').value); resumo(); });
+['inicio','fim','link'].forEach(i=>$(i).addEventListener('input',resumo));
+function resumo(){ const es=Object.keys(dados).map(k=>ESP.find(x=>x[0]===k)[1]);
+  $('res').innerHTML = `<b>${esc($('anunciante').value||'(sem nome)')}</b> · ${es.length?es.join(', '):'nenhum espaço'}<br>Páginas: ${paginas.length?paginas.map(rotulo).map(esc).join(' · '):'nenhuma'}<br>Período: ${$('inicio').value||'a partir de já'} até ${$('fim').value||'sem fim'}`; }
+
+/* gerar / abrir */
+$('gerar').onclick = ()=>{ const falta=[]; const id=$('id').value.trim();
+  if(!$('anunciante').value.trim()) falta.push('Nome do anunciante'); if(!/^[a-z0-9][a-z0-9-]*$/i.test(id)) falta.push('Código do anúncio (letras, números e hífen)');
+  if(!/^https?:\/\//i.test($('link').value.trim())) falta.push('Link (começando com https://)');
+  if(!paginas.length) falta.push('pelo menos uma página'); if(!Object.keys(dados).length) falta.push('pelo menos uma imagem');
+  if($('inicio').value && $('fim').value && $('fim').value<$('inicio').value) falta.push('Datas (o fim vem antes do início)');
+  if(falta.length) return err('Falta ou está errado: <b>'+falta.join(', ')+'</b>.'); err('');
+  const j={id,anunciante:$('anunciante').value.trim(),link:$('link').value.trim(),campanha:$('campanha').value.trim(),alt:$('alt').value.trim(),ativo:$('ativo').checked,inicio:$('inicio').value,fim:$('fim').value,paginas:paginas.slice(),espacos:{...dados}};
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(j,null,2)],{type:'application/json'})); a.download=id+'.json'; a.click();
+  setTimeout(()=>alert('Arquivo '+id+'.json baixado.\n\nEnvie-o para a pasta dados/anuncios do GitHub (Add file → Upload files).'),200); };
+$('abrir').onclick=()=>$('arq').click();
+$('arq').onchange = async (e)=>{ const f=e.target.files[0]; if(!f) return; try{ const j=JSON.parse(await f.text()); limpar(true);
+  ['anunciante','id','link','campanha','alt','inicio','fim'].forEach(c=>$(c).value=j[c]||''); $('ativo').checked=j.ativo!==false; idManual=true;
+  paginas=(j.paginas||[]).slice(); Object.entries(j.espacos||{}).forEach(([k,v])=>{ if(String(v).startsWith('data:')) dados[k]=v; else $('av-'+k).textContent='Imagem por caminho: '+v+' (envie de novo para trocar)'; }); ESP.forEach(x=>pintaEsp(x[0])); pintaPaginas(); err('');
+ }catch(x){ err('Não consegui ler esse arquivo.'); } e.target.value=''; };
+function limpar(q){ if(!q&&!confirm('Apagar tudo?')) return; 
+  ['anunciante','id','link','campanha','alt','inicio','fim','p-casa'].forEach(c=>$(c).value=''); $('ativo').checked=true; paginas=[]; Object.keys(dados).forEach(k=>delete dados[k]);
+  document.querySelectorAll('[data-k]').forEach(i=>i.value=''); ESP.forEach(x=>{ $('av-'+x[0]).textContent=''; pintaEsp(x[0]); }); idManual=false; pintaPaginas(); }
+$('limpa').onclick=()=>limpar();
+pintaPaginas();
+</script>
+</body>
+</html>

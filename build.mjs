@@ -14,6 +14,7 @@ import {
 } from './build/lib.mjs';
 import { lerXlsx, horaExcel, dataExcel } from './build/xlsx.mjs';
 import { lerCasas, sanitizarHtml, ehHtml, textoPuro } from './build/casas.mjs';
+import { lerAnuncios, escolher, TAM_ESPACO } from './build/anuncios.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -277,26 +278,54 @@ const wa = (msg) => `https://wa.me/${cfg.whatsapp}?text=${encodeURIComponent(msg
 const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
 
 const dimBanner = (b) => (b.tamanho.match(/\d+/g) || []).map(Number);
-function bannerItem(pos, b) {
+/* Link do anunciante com marcação de origem (UTM), para ele medir o retorno no próprio site.
+   "campanha" (opcional, em banners.json) vira utm_campaign; se o link já tiver utm_, nada é alterado. */
+function linkAnuncio(link, nome, campanha) {
+  if (!/^https?:\/\//i.test(link || '')) return link || '#';
+  try {
+    const u = new URL(link);
+    if (![...u.searchParams.keys()].some((k) => k.startsWith('utm_'))) {
+      u.searchParams.set('utm_source', 'guiadeswing');
+      u.searchParams.set('utm_medium', 'banner');
+      u.searchParams.set('utm_campaign', campanha || nome);
+      u.searchParams.set('utm_content', nome);
+    }
+    return u.toString();
+  } catch { return link; }
+}
+const evAnuncio = (nome, campanha) => ` data-umami-event="banner-${esc(nome)}"${campanha ? ` data-umami-event-campanha="${esc(campanha)}"` : ''}`;
+function bannerItem(pos, b, nome = pos) {
   const [w, h] = dimBanner(b);
   if (b.img) {
-    return `<a class="ad ad-${pos}" href="${esc(b.link || '#')}" target="_blank" rel="sponsored noopener"><span class="ad-tag">publicidade</span><img src="${esc(CTX.a(b.img))}" alt="${esc(b.alt || 'Publicidade')}" width="${w}" height="${h}" loading="lazy"></a>`;
+    return `<a class="ad ad-${pos}" href="${esc(linkAnuncio(b.link, nome, b.campanha))}"${evAnuncio(nome, b.campanha)} target="_blank" rel="sponsored noopener"><span class="ad-tag">publicidade</span><img src="${esc(CTX.a(b.img))}" alt="${esc(b.alt || 'Publicidade')}" width="${w}" height="${h}" loading="lazy"></a>`;
   }
   return `<a class="ad vazio ad-${pos}" style="aspect-ratio:${w}/${h}" href="${esc(CTX.u('anuncie/'))}"><span class="ad-tag">publicidade</span><b>Anuncie aqui</b><small>${esc(b.tamanho)} px</small></a>`;
 }
+/* Página que está sendo gerada (para escolher os anúncios dela) */
+let PAG = { kind: 'site' };
+const ANUNCIOS = lerAnuncios(path.join(ROOT, 'dados/anuncios'), warn);
+function anuncioPara(pos) {
+  const r = escolher(ANUNCIOS.ads, PAG, pos, warn);
+  if (!r) return null;
+  return { tamanho: TAM_ESPACO[pos], img: r.img, link: r.ad.link, alt: r.ad.alt, campanha: r.ad.campanha, nome: `${r.ad.id}-${pos}` };
+}
 function banner(pos) {
+  const a = anuncioPara(pos);
+  if (a) return bannerItem(pos, a, a.nome);
   const b = banners[pos];
   return b ? bannerItem(pos, b) : '';
 }
 /* Topo: fixo (1 imagem) ou carrossel com transição fade (2 ou mais imagens em "itens") */
 function bannerTopo() {
+  const a = anuncioPara('topo');
+  if (a) return bannerItem('topo', a, a.nome);
   const b = banners.topo;
   if (!b) return '';
   const itens = (b.itens && b.itens.length ? b.itens : [b]).filter((i) => i && i.img);
-  if (itens.length < 2) return bannerItem('topo', itens.length ? { ...b, ...itens[0] } : b);
+  if (itens.length < 2) return bannerItem('topo', itens.length ? { ...b, ...itens[0] } : b, 'topo-1');
   const [w, h] = dimBanner(b);
   const slides = itens.map((i, n) =>
-    `<a class="fade-slide${n === 0 ? ' on' : ''}" href="${esc(i.link || '#')}" target="_blank" rel="sponsored noopener"${n === 0 ? '' : ' aria-hidden="true" tabindex="-1"'}><img src="${esc(CTX.a(i.img))}" alt="${esc(i.alt || 'Publicidade')}" width="${w}" height="${h}"${n === 0 ? '' : ' loading="lazy"'}></a>`).join('');
+    `<a class="fade-slide${n === 0 ? ' on' : ''}" href="${esc(linkAnuncio(i.link, `topo-${n + 1}`, i.campanha))}"${evAnuncio(`topo-${n + 1}`, i.campanha)} target="_blank" rel="sponsored noopener"${n === 0 ? '' : ' aria-hidden="true" tabindex="-1"'}><img src="${esc(CTX.a(i.img))}" alt="${esc(i.alt || 'Publicidade')}" width="${w}" height="${h}"${n === 0 ? '' : ' loading="lazy"'}></a>`).join('');
   const dots = itens.map((_, n) => `<button type="button" aria-label="Banner ${n + 1} de ${itens.length}" aria-current="${n === 0}"></button>`).join('');
   return `<div class="ad ad-topo fade-car" style="aspect-ratio:${w}/${h}" data-intervalo="${esc(b.intervalo || 6)}" role="group" aria-roledescription="carrossel" aria-label="Publicidade"><span class="ad-tag">publicidade</span>${slides}<div class="fade-dots">${dots}</div></div>`;
 }
@@ -401,9 +430,18 @@ ${body}
 ${footer()}
 ${gateHtml()}
 <script src="${CTX.a('assets/app.js')}" defer></script>
+${estatisticasHtml()}
 </body>
 </html>
 `;
+}
+
+/* Estatística sem cookies (Umami). Só entra no site lançado e se "estatisticas.umamiId" estiver em config.json. */
+function estatisticasHtml() {
+  const id = cfg.estatisticas && cfg.estatisticas.umamiId;
+  if (!id || !cfg.lancado || PREVIEW) return '';
+  const src = (cfg.estatisticas.umamiSrc || 'https://cloud.umami.is/script.js');
+  return `<script defer src="${esc(src)}" data-website-id="${esc(id)}"></script>`;
 }
 
 function cardHtml(c) {
@@ -443,7 +481,7 @@ function emitir(rel, html, url, indexar = false) {
 }
 
 function paginaEntrada() {
-  CTX = mkctx(0);
+  CTX = mkctx(0); PAG = { kind: 'site' };
   const estadosHtml = geo.macro.flatMap((m) => m.estados).filter((uf) => estados[uf]).map((uf) => {
     const e = estados[uf];
     const ativo = ativosUF.has(uf);
@@ -482,6 +520,7 @@ ${buscaHtml('q-hero', 'Digite o nome da casa, bairro ou cidade')}
 
 function listagem({ depth, rel, uf, kicker, h1, crumbs, lista, regSel, tipoSel, title, desc, canonicalPath }) {
   CTX = mkctx(depth);
+  PAG = { kind: tipoSel ? 'tipo' : regSel ? 'regiao' : 'estado', uf, regiaoSlug: regSel, tipoSlug: tipoSel };
   const e = estados[uf];
   const base = uf.toLowerCase();
   const chipsReg = [
@@ -581,6 +620,7 @@ const linhaHtml = (l, extra = '') =>
 
 function paginaLocal(c) {
   CTX = mkctx(2);
+  PAG = { kind: 'casa', uf: c.uf, regiaoSlug: c.regiaoSlug, tipoSlug: c.tipoSlug, casaId: c.id };
   const e = estados[c.uf];
   const base = c.uf.toLowerCase();
   const urlAbs = `${cfg.siteUrl}/local/${c.slug}/`;
@@ -711,7 +751,7 @@ ${bannersRodape()}
 
 /* ---------- Páginas de texto ---------- */
 function paginaTexto(rel, titulo, desc, conteudo, canonical) {
-  CTX = mkctx(1);
+  CTX = mkctx(1); PAG = { kind: 'site' };
   const body = `<div class="conteudo"><nav class="migalha" aria-label="Você está em">${migalhaBase()}<span>${esc(titulo)}</span></nav><article class="texto"><h1 class="titulo">${esc(titulo)}</h1>${conteudo()}</article>${bannersRodape()}</div>`;
   emitir(rel, layout({ title: titulo, desc, canonical, body }), canonical, true);
 }
@@ -761,6 +801,9 @@ function paginasTexto() {
 <h2>Fontes e serviços externos</h2>
 <p>As fontes de letra são carregadas dos servidores do Google. Ao abrir mapas ou rotas, você é levado ao Google Maps ou ao Waze, que têm suas próprias políticas de privacidade.</p>
 <h2>Estatísticas de acesso</h2>
+${cfg.estatisticas && cfg.estatisticas.umamiId
+  ? '<p>Medimos visitas e cliques em anúncios com uma ferramenta de estatística que <strong>não usa cookies</strong> e não identifica você. Os dados servem para saber quais páginas e anúncios são mais acessados.</p>'
+  : ''}
 <p>Se passarmos a usar ferramentas de estatística ou publicidade com cookies, avisaremos aqui e pediremos o seu consentimento.</p>
 <h2>Dados de quem cadastra uma casa</h2>
 <p>Usamos as informações enviadas apenas para publicar a página da casa. Você pode pedir a correção ou a remoção a qualquer momento.</p>
@@ -775,7 +818,7 @@ function paginasTexto() {
 }
 
 function pagina404() {
-  CTX = mkctx(0, (cfg.basePath || '') + '/');
+  CTX = mkctx(0, (cfg.basePath || '') + '/'); PAG = { kind: 'site' };
   emitir('404.html', layout({
     title: 'Página não encontrada', noindex: true,
     body: `<div class="conteudo"><div class="vazio-msg"><h1 class="titulo">Página não encontrada</h1><p>O endereço que você abriu não existe ou foi movido.</p><a class="btn" href="${CTX.u('')}">Voltar ao início</a></div></div>`
@@ -800,6 +843,7 @@ const gravar = (rel, conteudo) => {
 for (const p of paginas) gravar(p.rel, p.html);
 fs.cpSync(path.join(ROOT, 'assets'), path.join(OUT, 'assets'), { recursive: true });
 for (const im of casasJson.imagens) gravar(im.rel, im.buf); // logos e fotos enviados pelo formulário
+for (const im of ANUNCIOS.imagens) gravar(im.rel, im.buf); // imagens dos anúncios
 
 // Dados para busca e "Minha lista" (carregados só quando necessário)
 const dadosJs = locais.map((c) => ({

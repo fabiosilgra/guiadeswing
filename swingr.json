@@ -1,0 +1,19 @@
+{
+  "id": "swingr",
+  "anunciante": "Swingr",
+  "link": "https://www.swingr.com.br",
+  "campanha": "swingr",
+  "alt": "Swingr",
+  "ativo": true,
+  "inicio": "",
+  "fim": "",
+  "paginas": [ { "tipo": "site" } ],
+  "espacos": {
+    "topo": "assets/banners/swingr-topo-1375x280.png",
+    "lateral1": "assets/banners/swingr-lateral1-420x551.png",
+    "lateral2": "assets/banners/swingr-lateral2-420x551.png",
+    "rodape1": "assets/banners/swingr-rodape1-436x326.png",
+    "rodape2": "assets/banners/swingr-rodape2-436x326.png",
+    "rodape3": "assets/banners/swingr-rodape3-436x326.png"
+  }
+}
