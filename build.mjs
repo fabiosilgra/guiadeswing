@@ -182,10 +182,11 @@ for (const v of rowsV) {
   if (!v.casal && !v.mulher_solteira && !v.homem_solteiro && !outros.length) { warn(`${ref}: linha sem nenhum valor preenchido ignorada.`); continue; }
   c.tabelaValores.push({ ...diaValores(v.dia), condicao: v.condicao || '', obs: v.obs || '', casal: v.casal || '', mulher: v.mulher_solteira || '', homem: v.homem_solteiro || '', outros });
 }
+const imagensGeradas = new Set(casasJson.imagens.map((i) => i.rel));
 for (const c of locais) {
   c.capa = c.fotos[0] || '';
   for (const f of [...c.fotos, ...(c.logo ? [c.logo] : [])]) {
-    if (ehUrl(f)) continue;
+    if (ehUrl(f) || imagensGeradas.has(f)) continue; // imagens vindas do formulário são criadas na hora de gerar o site
     const arq = path.join(ROOT, f);
     if (!fs.existsSync(arq)) { warn(`"${c.nome}" (${c.id}): a foto "${f}" não foi encontrada. Confira o nome e se o arquivo foi enviado.`); continue; }
     const kb = Math.round(fs.statSync(arq).size / 1024);
