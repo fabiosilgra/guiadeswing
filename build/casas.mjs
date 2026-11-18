@@ -19,10 +19,22 @@ export function decodificarImagem(uri, maxBytes = 900 * 1024) {
   return { ext, buf };
 }
 
+/* Lista os .json da pasta e de todas as subpastas (sp/, rj/...). Nomes que começam com _ são ignorados. */
+export function listarJson(dir, rel = '') {
+  const saida = [];
+  for (const e of fs.readdirSync(path.join(dir, rel), { withFileTypes: true }).sort((x, y) => x.name.localeCompare(y.name))) {
+    if (e.name.startsWith('_') || e.name.startsWith('.')) continue;
+    const r = rel ? `${rel}/${e.name}` : e.name;
+    if (e.isDirectory()) saida.push(...listarJson(dir, r));
+    else if (e.name.endsWith('.json')) saida.push(r);
+  }
+  return saida;
+}
+
 export function lerCasas(dir, warn) {
   const L = [], H = [], V = [], imagens = [];
   if (!fs.existsSync(dir)) return { L, H, V, imagens, arquivos: 0 };
-  const arquivos = fs.readdirSync(dir).filter((f) => f.endsWith('.json') && !f.startsWith('_')).sort();
+  const arquivos = listarJson(dir);
   for (const f of arquivos) {
     let j;
     try { j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); }

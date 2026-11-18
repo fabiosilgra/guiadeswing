@@ -1,7 +1,7 @@
 // Anúncios por página: um arquivo por anunciante em dados/anuncios/<id>.json
 import fs from 'node:fs';
 import path from 'node:path';
-import { decodificarImagem } from './casas.mjs';
+import { decodificarImagem, listarJson } from './casas.mjs';
 
 export const ESPACOS = ['topo', 'lateral1', 'lateral2', 'rodape1', 'rodape2', 'rodape3'];
 export const TAM_ESPACO = {
@@ -19,11 +19,11 @@ export function hojeSP(agora = new Date()) {
 export function lerAnuncios(dir, warn, hoje = hojeSP()) {
   const ads = [], imagens = [];
   if (!fs.existsSync(dir)) return { ads, imagens };
-  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json') && !x.startsWith('_')).sort()) {
+  for (const f of listarJson(dir)) {
     let j;
     try { j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); }
     catch (e) { warn(`dados/anuncios/${f}: arquivo inválido (${e.message}).`); continue; }
-    const id = slug(j.id || f.replace(/\.json$/, ''));
+    const id = slug(j.id || path.basename(f).replace(/\.json$/, ''));
     if (!id) { warn(`dados/anuncios/${f}: sem "id".`); continue; }
     if (j.ativo === false) continue;
     const inicio = s(j.inicio), fim = s(j.fim);
