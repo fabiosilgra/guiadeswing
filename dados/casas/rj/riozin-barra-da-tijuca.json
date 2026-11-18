@@ -50,7 +50,7 @@
     {
       "tipo": "funcionamento",
       "dias": "sex,sab",
-      "hora": "12:00",
+      "hora": "12:00-05:00",
       "obs": ""
     },
     {
@@ -60,5 +60,15 @@
       "obs": ""
     }
   ],
-  "valores": []
+  "valores": [
+    {
+      "dia": "Todos os dias",
+      "condicao": "Consultar no site ou Whatsapp os valores",
+      "casal": "Consultar no site ou Whatsapp os valores",
+      "mulher_solteira": "Consultar no site ou Whatsapp os valores",
+      "homem_solteiro": "Consultar no site ou Whatsapp os valores",
+      "outros": [],
+      "obs": ""
+    }
+  ]
 }
